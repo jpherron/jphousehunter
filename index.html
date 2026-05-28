@@ -3,462 +3,815 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>House Finder — Within 90 min of Boston</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Source+Sans+3:wght@300;400;500&display=swap" rel="stylesheet">
+<title>House Evaluator</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { min-height: 100vh; background: #0f0f0f; color: #e8e2d9; font-family: 'Source Sans 3', sans-serif; }
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: #1a1a1a; }
-  ::-webkit-scrollbar-thumb { background: #3a3a3a; border-radius: 2px; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh}
+.app{max-width:900px;margin:0 auto;padding:24px 20px}
+h1{font-size:22px;font-weight:600;margin-bottom:4px}
+.subtitle{font-size:13px;color:#666;margin-bottom:24px}
 
-  .header { border-bottom: 1px solid #222; padding: 28px 32px 24px; }
-  .header-inner { max-width: 760px; margin: 0 auto; }
-  .region-label { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 8px; }
-  .app-title { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 400; color: #e8e2d9; letter-spacing: -0.01em; }
-  .app-subtitle { font-size: 14px; color: #666; margin-top: 6px; font-weight: 300; }
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:1px solid #ddd;margin-bottom:24px}
+.tab{padding:8px 18px;border:none;background:none;font-size:13px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
+.tab.active{color:#2563eb;border-bottom-color:#2563eb}
+.tab:hover:not(.active){color:#333}
+.panel{display:none}.panel.active{display:block}
 
-  .main { max-width: 760px; margin: 0 auto; padding: 28px 32px; }
+/* Criteria */
+.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#888;margin:20px 0 10px}
+.crit-row{padding:10px 0;border-bottom:1px solid #eee}
+.crit-row:last-child{border-bottom:none}
+.crit-top{display:grid;grid-template-columns:1fr 50px 140px;align-items:center;gap:12px}
+.crit-name{font-size:13px;font-weight:500}
+.crit-wval{font-size:12px;color:#888;text-align:right}
+input[type=range]{width:100%;accent-color:#2563eb}
+.tiers{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.tier{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid #e0e0e0;color:#555;line-height:1.4;cursor:pointer;transition:all .15s}
+.tier:hover{border-color:#2563eb;color:#2563eb}
+.tier.selected{border-color:#2563eb;background:#eff6ff;color:#2563eb}
+.tier span{font-weight:600;display:block;font-size:10px;margin-bottom:1px}
+.tier.full span{color:#16a34a}.tier.partial span{color:#d97706}.tier.low span{color:#dc2626}
 
-  .progress-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-size: 12px; color: #555; }
+/* Stars */
+.stars{display:flex;gap:4px;margin-top:6px}
+.star{font-size:20px;cursor:pointer;color:#ddd;transition:color .1s;line-height:1}
+.star.on{color:#f59e0b}
 
-  .tabs { display: flex; border-bottom: 1px solid #222; margin-bottom: 28px; overflow-x: auto; gap: 0; }
-  .tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 16px; font-family: 'Source Sans 3', sans-serif; font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; color: #888; transition: all 0.15s; white-space: nowrap; margin-bottom: -1px; }
-  .tab.active { color: #c8a96e; border-bottom-color: #c8a96e; }
-  .tab:hover:not(.active) { color: #ccc; }
+/* Score panel */
+.score-card{background:#fff;border-radius:10px;padding:18px;margin-bottom:16px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.score-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.score-address{font-size:15px;font-weight:600}
+.score-price{font-size:13px;color:#555;margin-top:2px}
+.score-badge{min-width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
+.score-badge.great{background:#dcfce7;color:#16a34a}
+.score-badge.good{background:#fef9c3;color:#ca8a04}
+.score-badge.ok{background:#ffedd5;color:#c2410c}
+.score-badge.poor{background:#fee2e2;color:#dc2626}
+.score-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
+.score-item{font-size:12px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6}
+.score-item:last-child{border-bottom:none}
+.score-item .val{font-weight:600}
+.score-item .val.full{color:#16a34a}.score-item .val.partial{color:#d97706}.score-item .val.low{color:#dc2626}.score-item .val.none{color:#9ca3af}
 
-  .criteria-list { display: flex; flex-direction: column; gap: 24px; }
-  .criterion-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
-  .criterion-label { font-family: 'Playfair Display', serif; font-size: 15px; color: #e8e2d9; }
-  .criterion-hint { font-size: 12px; color: #555; margin-left: 10px; }
-  .weight-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; min-width: 52px; text-align: right; }
-  .weight-label.high { color: #c8a96e; }
-  .weight-label.mid { color: #888; }
-  .weight-label.low { color: #555; }
+/* Neighborhood tier badge */
+.nbhd-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:6px}
+.nbhd-badge.tier1{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+.nbhd-badge.tier2{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.nbhd-badge.other{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+.nbhd-bar-wrap{margin-top:8px}
+.nbhd-bar-label{font-size:11px;color:#888;margin-bottom:3px;display:flex;justify-content:space-between}
+.nbhd-bar-track{height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}
+.nbhd-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
 
-  input[type=range] { -webkit-appearance: none; width: 100%; height: 2px; background: #2a2a2a; outline: none; cursor: pointer; border-radius: 1px; }
-  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #c8a96e; cursor: pointer; box-shadow: 0 0 0 3px #0f0f0f, 0 0 0 4px #c8a96e44; }
+/* Listing dashboard */
+.listings-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.btn{padding:7px 14px;border-radius:6px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
+.btn-secondary{background:#fff;color:#374151;border:1px solid #d1d5db}.btn-secondary:hover{background:#f9fafb}
+.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.btn-danger:hover{background:#fecaca}
+.listing-card{background:#fff;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .15s}
+.listing-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.listing-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.listing-rank{font-size:13px;font-weight:700;color:#9ca3af;min-width:24px}
+.listing-info{flex:1;min-width:0}
+.listing-address{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.listing-meta{font-size:12px;color:#6b7280;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.listing-score{font-size:18px;font-weight:700;min-width:40px;text-align:right}
+.listing-score.great{color:#16a34a}.listing-score.good{color:#ca8a04}.listing-score.ok{color:#c2410c}.listing-score.poor{color:#dc2626}
+.listing-actions{display:flex;gap:6px;padding:0 16px 14px;border-top:1px solid #f3f4f6;margin-top:8px}
+.listing-expanded{padding:0 16px 14px;border-top:1px solid #f3f4f6}
+.listing-expanded.hidden{display:none}
 
-  .pref-input { width: 100%; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 2px; color: #e8e2d9; font-family: 'Source Sans 3', sans-serif; font-size: 13px; padding: 8px 10px; margin-top: 8px; resize: none; transition: border-color 0.15s; line-height: 1.5; }
-  .pref-input:focus { outline: none; border-color: #c8a96e44; }
-  .pref-input::placeholder { color: #444; }
+/* Add listing form */
+.form-section{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:20px;margin-bottom:20px}
+.form-title{font-size:15px;font-weight:600;margin-bottom:16px}
+.form-row{margin-bottom:12px}
+.form-row label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px}
+.form-row input,.form-row textarea{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit}
+.form-row textarea{min-height:100px;resize:vertical}
+.form-row input:focus,.form-row textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ai-status{font-size:12px;color:#2563eb;margin-top:8px;display:none}
 
-  .cta-row { margin-top: 40px; padding-top: 28px; border-top: 1px solid #1e1e1e; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-  .find-btn { background: #c8a96e; color: #0f0f0f; border: none; padding: 14px 36px; font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 500; letter-spacing: 0.04em; cursor: pointer; transition: all 0.2s; border-radius: 2px; }
-  .find-btn:hover:not(:disabled) { background: #d4b87a; transform: translateY(-1px); }
-  .find-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Neighborhood selector */
+.nbhd-selector{margin-bottom:12px}
+.nbhd-selector label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px}
+.nbhd-selector select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;background:#fff}
+.nbhd-selector select:focus{outline:none;border-color:#2563eb}
 
-  .status-text { font-size: 13px; color: #c8a96e; animation: pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+/* Data tab */
+.data-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
+.data-table th{background:#f9fafb;padding:8px 12px;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb}
+.data-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#555}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:#f9fafb}
 
-  .error-box { margin-top: 24px; padding: 14px 16px; background: #1e1212; border: 1px solid #3a2020; border-radius: 2px; font-size: 13px; color: #cc8888; display: none; }
+/* Empty state */
+.empty{text-align:center;padding:48px 20px;color:#9ca3af}
+.empty p{font-size:14px;margin-top:8px}
 
-  .results-section { margin-top: 40px; display: none; }
-  .results-header { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #888; margin-bottom: 20px; }
-  .results-list { display: flex; flex-direction: column; gap: 16px; }
-
-  .result-card { border: 1px solid #2a2a2a; border-radius: 2px; overflow: hidden; transition: border-color 0.2s; animation: fadeSlide 0.4s ease forwards; opacity: 0; }
-  .result-card:hover { border-color: #c8a96e44; }
-  @keyframes fadeSlide { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-  .card-header { padding: 18px 20px; display: flex; gap: 16px; align-items: flex-start; border-bottom: 1px solid #1e1e1e; }
-  .score-ring { width: 56px; height: 56px; border-radius: 50%; border: 2px solid #888; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; flex-shrink: 0; color: #888; }
-  .card-meta { flex: 1; min-width: 0; }
-  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-  .card-address { font-family: 'Playfair Display', serif; font-size: 16px; color: #e8e2d9; line-height: 1.3; }
-  .card-price { font-size: 15px; color: #c8a96e; margin-top: 3px; font-weight: 500; }
-
-  /* Tier badge */
-  .tier-badge { display: inline-block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; margin-top: 5px; font-weight: 500; }
-  .tier-badge.tier1 { background: #1a2010; color: #8aaa68; border: 1px solid #2a3a20; }
-  .tier-badge.tier2 { background: #1a1608; color: #c8a96e; border: 1px solid #2a2010; }
-  .tier-badge.tier-other { background: #1a1a1a; color: #666; border: 1px solid #2a2a2a; }
-
-  .view-link { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #888; text-decoration: none; border: 1px solid #2a2a2a; padding: 5px 10px; border-radius: 2px; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; align-self: flex-start; }
-  .view-link:hover { border-color: #c8a96e44; color: #c8a96e; }
-
-  .card-body { padding: 16px 20px; }
-  .card-analysis { font-size: 13px; color: #aaa; line-height: 1.7; margin-bottom: 14px; font-weight: 300; }
-
-  /* Neighborhood fit bar */
-  .neighborhood-fit { margin-bottom: 14px; }
-  .nf-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #666; margin-bottom: 6px; display: flex; justify-content: space-between; }
-  .nf-label span { color: #888; }
-  .nf-bar-track { height: 3px; background: #1e1e1e; border-radius: 2px; overflow: hidden; }
-  .nf-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-
-  .card-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .col-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
-  .col-label.green { color: #4a7a4a; }
-  .col-label.red { color: #7a4a4a; }
-  .col-item { font-size: 12px; line-height: 1.6; padding-left: 8px; margin-bottom: 4px; }
-  .col-item.green { color: #8aaa88; border-left: 1px solid #2a3a2a; }
-  .col-item.red { color: #aa8888; border-left: 1px solid #3a2a2a; }
-
-  .best-badge { padding: 6px 20px; background: #1a1608; border-top: 1px solid #2a2010; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #c8a96e88; }
-  .results-footnote { margin-top: 24px; font-size: 12px; color: #444; line-height: 1.7; }
-
-  /* Neighborhood legend */
-  .neighborhood-legend { margin-bottom: 32px; padding: 16px 20px; background: #141414; border: 1px solid #222; border-radius: 2px; }
-  .legend-title { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #666; margin-bottom: 12px; }
-  .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .legend-item { font-size: 11px; color: #666; line-height: 1.5; }
-  .legend-item strong { color: #888; font-weight: 500; display: block; }
-  .legend-t1 { color: #8aaa68; }
-  .legend-t2 { color: #c8a96e; }
+/* Neighborhood info box */
+.nbhd-info{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#78350f;line-height:1.6}
+.nbhd-info strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;color:#92400e}
+.nbhd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.nbhd-group strong{font-weight:600;color:#555;display:block;margin-bottom:2px}
 </style>
 </head>
 <body>
+<div class="app">
+  <h1>House Evaluator</h1>
+  <p class="subtitle">Score listings against your priorities. Neighborhood tier fit baked in.</p>
 
-<div class="header">
-  <div class="header-inner">
-    <div class="region-label">Within 90 min of Boston</div>
-    <h1 class="app-title">House Finder</h1>
-    <p class="app-subtitle">Set your priorities — AI searches current listings, scores them against your criteria, and ranks by neighborhood fit.</p>
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('criteria')">Criteria & Weights</button>
+    <button class="tab" onclick="showPanel('listings')">Listings</button>
+    <button class="tab" onclick="showPanel('add')">Add Listing</button>
+    <button class="tab" onclick="showPanel('data')">Data</button>
   </div>
-</div>
 
-<div class="main">
+  <!-- CRITERIA PANEL -->
+  <div id="panel-criteria" class="panel active">
+    <p style="font-size:13px;color:#666;margin-bottom:16px">Adjust weights (1–10) for each criterion. Click a tier button to see what it means — these will be used when scoring listings.</p>
 
-  <!-- Neighborhood legend -->
-  <div class="neighborhood-legend">
-    <div class="legend-title">Your neighborhood ranking — baked into scoring</div>
-    <div class="legend-grid">
-      <div class="legend-item"><strong class="legend-t1">Tier 1 — Woven into Boston</strong>Roslindale (Tappan/Walter/Met. Hill) · West Roxbury (Centre St/Bellevue Hill) · Hyde Park Fairmount Hill</div>
-      <div class="legend-item"><strong class="legend-t2">Tier 2 — Town identity, S/W of Boston</strong>Dedham Square · Natick Center · Norwood Center · Walpole Center · Plymouth Historic Downtown</div>
+    <div class="section-title">Basics</div>
+    <div id="crit-basics"></div>
+
+    <div class="section-title">Space</div>
+    <div id="crit-space"></div>
+
+    <div class="section-title">Systems & Condition</div>
+    <div id="crit-systems"></div>
+
+    <div class="section-title">Character</div>
+    <div id="crit-character"></div>
+
+    <div class="section-title">Extras</div>
+    <div id="crit-extras"></div>
+
+    <div class="section-title">Neighborhood Tier</div>
+    <div class="nbhd-info">
+      <strong>Your pre-researched neighborhood ranking — applied automatically to every score</strong>
+      <div class="nbhd-grid">
+        <div class="nbhd-group">
+          <strong style="color:#15803d">Tier 1 — Woven into Boston</strong>
+          Roslindale (Tappan/Walter/Met. Hill) · West Roxbury (Centre St/Bellevue Hill/Millennium Park edge) · Hyde Park Fairmount Hill only
+        </div>
+        <div class="nbhd-group">
+          <strong style="color:#92400e">Tier 2 — Town identity, S/W of Boston</strong>
+          Dedham Square · Natick Center · Norwood Center · Walpole Center · Plymouth Historic Downtown
+        </div>
+      </div>
+    </div>
+    <div class="crit-row">
+      <div class="crit-top">
+        <span class="crit-name">Neighborhood Tier Weight</span>
+        <span class="crit-wval" id="wval-neighborhood_tier">7</span>
+        <input type="range" min="1" max="10" value="7" oninput="updateWeight('neighborhood_tier',this.value)">
+      </div>
+      <div style="font-size:12px;color:#888;margin-top:6px">Higher weight = neighborhood placement has more influence on the final score. Tier 1 match = full points, Tier 2 = partial, outside tiers = none.</div>
     </div>
   </div>
 
-  <div class="progress-bar">
-    <span id="progressCount">0 of 18 criteria described</span>
-    <span>Adjust weights · Add notes where it matters most</span>
+  <!-- LISTINGS PANEL -->
+  <div id="panel-listings" class="panel">
+    <div class="listings-header">
+      <div style="font-size:13px;color:#666"><span id="listing-count">0</span> listings</div>
+      <button class="btn btn-secondary" onclick="showPanel('add')">+ Add Listing</button>
+    </div>
+    <div id="listings-list"><div class="empty"><div style="font-size:32px">🏠</div><p>No listings yet. Add one to get started.</p></div></div>
   </div>
 
-  <div class="tabs" id="tabBar"></div>
-  <div class="criteria-list" id="criteriaList"></div>
+  <!-- ADD LISTING PANEL -->
+  <div id="panel-add" class="panel">
+    <div class="form-section">
+      <div class="form-title">Add New Listing</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Address</label>
+          <input type="text" id="f-address" placeholder="123 Main St, Roslindale, MA">
+        </div>
+        <div class="form-row">
+          <label>Price</label>
+          <input type="text" id="f-price" placeholder="$749,000">
+        </div>
+        <div class="form-row">
+          <label>Listing URL</label>
+          <input type="text" id="f-url" placeholder="https://redfin.com/...">
+        </div>
+        <div class="form-row">
+          <label>Year Built</label>
+          <input type="text" id="f-year" placeholder="1925">
+        </div>
+      </div>
 
-  <div class="cta-row">
-    <button class="find-btn" id="findBtn" onclick="runSearch()">Find My Houses</button>
-    <span class="status-text" id="statusText" style="display:none">Searching current listings…</span>
+      <div class="nbhd-selector">
+        <label>Neighborhood Tier</label>
+        <select id="f-nbhd-tier">
+          <option value="other">— Outside target areas —</option>
+          <optgroup label="Tier 1 — Woven into Boston">
+            <option value="tier1-rozzie-tappan">Roslindale — Tappan/Walter/Arboretum edge</option>
+            <option value="tier1-rozzie-village">Roslindale — Metropolitan Hill / Adams Park village</option>
+            <option value="tier1-wr-centre">West Roxbury — Centre St village + Corey St</option>
+            <option value="tier1-wr-bellevue">West Roxbury — Bellevue Hill</option>
+            <option value="tier1-wr-millennium">West Roxbury — Millennium Park edge</option>
+            <option value="tier1-hp-fairmount">Hyde Park — Fairmount Hill only</option>
+          </optgroup>
+          <optgroup label="Tier 2 — Town identity, S/W of Boston">
+            <option value="tier2-dedham">Dedham Square — near Endicott station</option>
+            <option value="tier2-natick">Natick Center — village core near station</option>
+            <option value="tier2-norwood">Norwood Center — near Norwood Central station</option>
+            <option value="tier2-walpole">Walpole Center — near Union Station</option>
+            <option value="tier2-plymouth">Plymouth Historic Downtown — waterfront district</option>
+          </optgroup>
+          <optgroup label="Other areas">
+            <option value="other-rozzie">Roslindale (outside target streets)</option>
+            <option value="other-wr">West Roxbury (outside target streets)</option>
+            <option value="other-hp">Hyde Park (outside Fairmount Hill)</option>
+            <option value="other-jp">Jamaica Plain</option>
+            <option value="other-metro">Other MetroWest / South Shore / other</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>Paste listing description (for AI scoring)</label>
+        <textarea id="f-description" placeholder="Paste the full listing text from Zillow or Redfin here. The AI will extract scores for all criteria automatically."></textarea>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="scoreWithAI()">Score with AI</button>
+        <button class="btn btn-secondary" onclick="addManually()">Add &amp; Score Manually</button>
+      </div>
+      <div class="ai-status" id="ai-status">Analyzing listing…</div>
+    </div>
+
+    <!-- Manual scoring form (hidden until needed) -->
+    <div id="manual-form" style="display:none">
+      <div class="form-section">
+        <div class="form-title">Score Manually</div>
+        <div id="manual-criteria"></div>
+        <div style="margin-top:16px;display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveManual()">Save Listing</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('manual-form').style.display='none'">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="error-box" id="errorBox"></div>
-
-  <div class="results-section" id="resultsSection">
-    <div class="results-header" id="resultsHeader"></div>
-    <div class="results-list" id="resultsList"></div>
-    <div class="results-footnote">Results reflect current listings found via web search. Neighborhood tier reflects your personal ranking developed through research. Verify all listing details directly on Zillow or Redfin before acting.</div>
+  <!-- DATA PANEL -->
+  <div id="panel-data" class="panel">
+    <div class="data-actions">
+      <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('import-input').click()">Import JSON</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
+      <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+    </div>
+    <div id="data-table-wrap"></div>
   </div>
-
 </div>
 
 <script>
+// ─── CRITERIA DEFINITION ───────────────────────────────────────────────────
 const CRITERIA = [
-  { id: "price", label: "Price", group: "Basics", weight: 5, hint: "Max budget and ideal price point", placeholder: "e.g. Hard max $950k, ideally under $850k" },
-  { id: "property_type", label: "Property Type", group: "Basics", weight: 5, hint: "Preferred type, acceptable fallbacks", placeholder: "e.g. Single family preferred, duplex/townhouse OK, condo last resort" },
-  { id: "location", label: "Location / Town", group: "Basics", weight: 5, hint: "Preferred towns or zones", placeholder: "e.g. Roslindale, West Roxbury, Dedham, Natick — see tier rankings above" },
-  { id: "commute", label: "Commute", group: "Basics", weight: 4, hint: "Commute needs — currently no daily Boston commute", placeholder: "e.g. No daily commute now; want commuter rail access for occasional Boston trips" },
-  { id: "lot", label: "Lot Size / Outdoor", group: "Space", weight: 4, hint: "Yard size, privacy, outdoor priorities", placeholder: "e.g. Decent yard, some privacy — not a postage stamp" },
-  { id: "sqft", label: "Square Footage", group: "Space", weight: 3, hint: "Minimum usable space, room needs", placeholder: "e.g. 1,500–2,500 sqft, need a home office" },
-  { id: "layout", label: "Layout", group: "Space", weight: 3, hint: "Room count, layout preferences", placeholder: "e.g. 3 bed, open main floor, natural light important" },
-  { id: "condition", label: "Condition", group: "Systems & Condition", weight: 4, hint: "Move-in readiness, tolerance for work", placeholder: "e.g. Prefer move-in ready, willing to do cosmetic updates but not gut reno" },
-  { id: "roof", label: "Roof", group: "Systems & Condition", weight: 3, hint: "Age / condition expectations", placeholder: "e.g. Should have 5+ years left, ideally 10+" },
-  { id: "hvac", label: "HVAC / Heat", group: "Systems & Condition", weight: 3, hint: "System type and age preferences", placeholder: "e.g. Gas heat preferred, recent system a plus" },
-  { id: "electrical", label: "Electrical", group: "Systems & Condition", weight: 3, hint: "Panel, wiring expectations", placeholder: "e.g. Updated panel, no knob-and-tube" },
-  { id: "plumbing", label: "Plumbing", group: "Systems & Condition", weight: 3, hint: "Plumbing age/condition", placeholder: "e.g. No galvanized pipes, functional basement/sump" },
-  { id: "windows", label: "Windows / Siding", group: "Systems & Condition", weight: 2, hint: "Energy efficiency, exterior condition", placeholder: "e.g. Replacement windows preferred" },
-  { id: "architecture", label: "Architectural Interest", group: "Character", weight: 3, hint: "Style, charm, visual appeal", placeholder: "e.g. Love Craftsman, Colonial, Victorian, Cape — not builder-grade 80s boxes" },
-  { id: "natural_light", label: "Natural Light", group: "Character", weight: 3, hint: "Light quality, window placement", placeholder: "e.g. Important — south/west exposure, not dark and choppy" },
-  { id: "neighborhood", label: "Neighborhood Feel", group: "Character", weight: 3, hint: "Walkability, street character, vibe", placeholder: "e.g. Walkable restaurants, green space nearby, JP/Brookline energy" },
-  { id: "garage", label: "Garage / Parking", group: "Extras", weight: 2, hint: "Garage needs, off-street parking", placeholder: "e.g. 2-car garage preferred, or high-ceiling basement as alternative" },
-  { id: "basement", label: "Basement", group: "Extras", weight: 2, hint: "Finished/unfinished, usability", placeholder: "e.g. Dry basement with high ceilings a strong plus" },
+  { id:'price', name:'Price', group:'basics', weight:8,
+    tiers:[
+      {label:'Full',desc:'Under $850k',score:1.0},
+      {label:'Good',desc:'$850k–$900k',score:0.7},
+      {label:'Stretch',desc:'$900k–$950k',score:0.3},
+      {label:'Over',desc:'Above $950k',score:0.0}
+    ]},
+  { id:'property_type', name:'Property Type', group:'basics', weight:7,
+    tiers:[
+      {label:'Full',desc:'Single family',score:1.0},
+      {label:'Good',desc:'Duplex / townhouse',score:0.6},
+      {label:'Low',desc:'Condo in small building',score:0.3},
+      {label:'None',desc:'Large condo building',score:0.0}
+    ]},
+  { id:'t_walk', name:'Walk to T / Commuter Rail', group:'basics', weight:5,
+    tiers:[
+      {label:'Full',desc:'Under 10 min walk',score:1.0},
+      {label:'Good',desc:'10–20 min walk',score:0.6},
+      {label:'Low',desc:'Short drive / bike',score:0.3},
+      {label:'None',desc:'Car dependent',score:0.0}
+    ]},
+  { id:'safety', name:'Safe Neighborhood', group:'basics', weight:7,
+    tiers:[
+      {label:'Full',desc:'Low crime, feels safe',score:1.0},
+      {label:'Good',desc:'Generally safe, minor concerns',score:0.6},
+      {label:'Low',desc:'Mixed, some concern',score:0.2},
+      {label:'None',desc:'High crime area',score:0.0}
+    ]},
+  { id:'sqft', name:'Square Footage', group:'space', weight:5,
+    tiers:[
+      {label:'Full',desc:'1,500–2,500 sqft',score:1.0},
+      {label:'Good',desc:'1,300–1,500 or 2,500–2,800',score:0.6},
+      {label:'Low',desc:'1,100–1,300 sqft',score:0.3},
+      {label:'None',desc:'Under 1,100 sqft',score:0.0}
+    ]},
+  { id:'beds', name:'Bedrooms / Office', group:'space', weight:6,
+    tiers:[
+      {label:'Full',desc:'3 bed or 2 bed + office',score:1.0},
+      {label:'Good',desc:'2 bed, could convert',score:0.5},
+      {label:'Low',desc:'2 bed, no office option',score:0.2},
+      {label:'None',desc:'1 bed',score:0.0}
+    ]},
+  { id:'yard', name:'Yard / Outdoor', group:'space', weight:5,
+    tiers:[
+      {label:'Full',desc:'Private yard, decent size',score:1.0},
+      {label:'Good',desc:'Small yard or shared outdoor',score:0.6},
+      {label:'Low',desc:'Minimal outdoor space',score:0.2},
+      {label:'None',desc:'No outdoor space',score:0.0}
+    ]},
+  { id:'layout', name:'Layout & Flow', group:'space', weight:4,
+    tiers:[
+      {label:'Full',desc:'Open, good natural light, sensible flow',score:1.0},
+      {label:'Good',desc:'Some awkwardness, mostly works',score:0.6},
+      {label:'Low',desc:'Choppy or dark',score:0.2},
+      {label:'None',desc:'Major layout problems',score:0.0}
+    ]},
+  { id:'condition', name:'Overall Condition', group:'systems', weight:6,
+    tiers:[
+      {label:'Full',desc:'Move-in ready',score:1.0},
+      {label:'Good',desc:'Cosmetic updates needed',score:0.6},
+      {label:'Low',desc:'Significant work needed',score:0.2},
+      {label:'None',desc:'Major renovation required',score:0.0}
+    ]},
+  { id:'roof', name:'Roof', group:'systems', weight:5,
+    tiers:[
+      {label:'Full',desc:'10+ years left',score:1.0},
+      {label:'Good',desc:'5–10 years left',score:0.6},
+      {label:'Low',desc:'2–5 years left',score:0.2},
+      {label:'None',desc:'Needs replacement now',score:0.0}
+    ]},
+  { id:'hvac', name:'HVAC / Heat', group:'systems', weight:5,
+    tiers:[
+      {label:'Full',desc:'Recent system, good condition',score:1.0},
+      {label:'Good',desc:'Functional, 5–10 years old',score:0.6},
+      {label:'Low',desc:'Older but working',score:0.3},
+      {label:'None',desc:'Needs replacement',score:0.0}
+    ]},
+  { id:'electrical', name:'Electrical', group:'systems', weight:5,
+    tiers:[
+      {label:'Full',desc:'Updated panel, no knob-and-tube',score:1.0},
+      {label:'Good',desc:'Functional, minor updates needed',score:0.6},
+      {label:'Low',desc:'Older panel, some work needed',score:0.2},
+      {label:'None',desc:'Knob-and-tube or needs full update',score:0.0}
+    ]},
+  { id:'plumbing', name:'Plumbing', group:'systems', weight:5,
+    tiers:[
+      {label:'Full',desc:'Updated, no galvanized pipes',score:1.0},
+      {label:'Good',desc:'Mostly good, minor issues',score:0.6},
+      {label:'Low',desc:'Some galvanized, functional',score:0.2},
+      {label:'None',desc:'Needs significant work',score:0.0}
+    ]},
+  { id:'windows', name:'Windows & Siding', group:'systems', weight:3,
+    tiers:[
+      {label:'Full',desc:'Replacement windows, good siding',score:1.0},
+      {label:'Good',desc:'Decent, some updates helpful',score:0.6},
+      {label:'Low',desc:'Older, some replacement needed',score:0.2},
+      {label:'None',desc:'Need full replacement',score:0.0}
+    ]},
+  { id:'architecture', name:'Architectural Interest', group:'character', weight:6, type:'stars',
+    starLabels:['No character','Some charm','Nice home','Really interesting','Exceptional']},
+  { id:'natural_light', name:'Natural Light', group:'character', weight:5,
+    tiers:[
+      {label:'Full',desc:'Bright, south/west exposure',score:1.0},
+      {label:'Good',desc:'Good light, some dark rooms',score:0.6},
+      {label:'Low',desc:'Mostly acceptable',score:0.3},
+      {label:'None',desc:'Dark throughout',score:0.0}
+    ]},
+  { id:'neighborhood_feel', name:'Neighborhood Feel / Walkability', group:'character', weight:6,
+    tiers:[
+      {label:'Full',desc:'Walkable restaurants + green space, JP/Brookline energy',score:1.0},
+      {label:'Good',desc:'Some walkability, pleasant streets',score:0.6},
+      {label:'Low',desc:'Quiet but car-dependent',score:0.3},
+      {label:'None',desc:'Strip mall / no character',score:0.0}
+    ]},
+  { id:'historic_age', name:'Historic Age (pre-1940)', group:'character', weight:4,
+    tiers:[
+      {label:'Full',desc:'Built before 1920',score:1.0},
+      {label:'Good',desc:'1920–1939',score:0.8},
+      {label:'Low',desc:'1940–1960',score:0.3},
+      {label:'None',desc:'Post-1960',score:0.0}
+    ]},
+  { id:'garage_basement', name:'Garage or High-Ceiling Basement', group:'extras', weight:6,
+    tiers:[
+      {label:'Full',desc:'2+ car garage OR basement ≥8ft ceiling',score:1.0},
+      {label:'Good',desc:'1-car garage or decent basement',score:0.6},
+      {label:'Low',desc:'Small garage or low basement',score:0.2},
+      {label:'None',desc:'No garage, no usable basement',score:0.0}
+    ]},
+  { id:'parking', name:'Dedicated Parking', group:'extras', weight:4,
+    tiers:[
+      {label:'Full',desc:'Off-street dedicated parking',score:1.0},
+      {label:'Good',desc:'Easy street parking',score:0.5},
+      {label:'Low',desc:'Limited street parking',score:0.2},
+      {label:'None',desc:'No parking available',score:0.0}
+    ]},
+  { id:'restaurants_walk', name:'Walk to Restaurants', group:'extras', weight:5,
+    tiers:[
+      {label:'Full',desc:'10+ min walk to multiple restaurants',score:1.0},
+      {label:'Good',desc:'15 min walk, some options',score:0.6},
+      {label:'Low',desc:'Short drive needed',score:0.2},
+      {label:'None',desc:'Car required for dining',score:0.0}
+    ]},
+  { id:'nature_walk', name:'Walk to Nature / Green Space', group:'extras', weight:4,
+    tiers:[
+      {label:'Full',desc:'Park, arboretum, or trails within 10 min walk',score:1.0},
+      {label:'Good',desc:'Some green space nearby',score:0.6},
+      {label:'Low',desc:'Drive to nature',score:0.2},
+      {label:'None',desc:'No green space nearby',score:0.0}
+    ]},
 ];
 
-const GROUPS = ["Basics", "Space", "Systems & Condition", "Character", "Extras"];
-const WEIGHT_LABELS = ["Skip", "", "Low", "", "Medium", "", "High", "", "Must"];
-
-// Neighborhood tier definitions — baked into scoring
-const NEIGHBORHOOD_TIERS = {
-  tier1: {
-    label: "Tier 1 — Woven into Boston",
-    color: "#8aaa68",
-    fillColor: "#4a7a4a",
-    areas: [
-      { name: "Roslindale — Tappan/Walter/Arboretum edge", notes: "Best Tier 1. Historic Victorians, walkable to Village restaurants + farmers market, Arnold Arboretum access. Target Tappan, Walter, South, Canterbury Sts." },
-      { name: "Roslindale — Metropolitan Hill / Adams Park", notes: "Densest, most walkable Roslindale. Steps from Village, commuter rail, Saturday farmers market. Highest neighborhood energy in Tier 1." },
-      { name: "West Roxbury — Centre St village + Corey St area", notes: "Streets off Centre St toward Millennium Park. Bungalows, Colonials, walkable to restaurants. Commuter rail (Needham Line)." },
-      { name: "West Roxbury — Bellevue Hill", notes: "Elevated, views, larger lots, strongest architectural character in WR. Better for house quality over walkability." },
-      { name: "West Roxbury — Millennium Park edge", notes: "100-acre park as your backyard — trails, Charles River, sports fields. Quieter, more suburban feel." },
-      { name: "Hyde Park — Fairmount Hill only", notes: "Gothic Revival, Italianate, Victorian homes. Best historic stock in Hyde Park. Fairmount Line commuter rail. Thinner on dining. Most affordable Tier 1 (~$632k median)." },
-    ]
-  },
-  tier2: {
-    label: "Tier 2 — Town identity, south/west of Boston",
-    color: "#c8a96e",
-    fillColor: "#8a6a2e",
-    areas: [
-      { name: "Dedham Square — near Endicott station", notes: "Historic homes from early 1800s. Endicott commuter rail (Franklin Line) right in the Square. High St, Eastern Ave, Court St side streets. Median ~$760k." },
-      { name: "Natick Center — village core near station", notes: "Best Tier 2 west. Walkable downtown, restaurants, historic housing, Boston Marathon route. Framingham/Worcester Line. Budget ~$900k–$950k." },
-      { name: "Norwood Center — near Norwood Central station", notes: "Best value in Tier 2. Tudor + Cape Cod homes. Two Franklin Line stations (~35 min to South Station). Median ~$689k. Thinnest restaurant scene." },
-      { name: "Walpole Center — near Union Station", notes: "Quiet, genuine New England town. Victorian-era Union Station (National Register). Franklin Line Zone 4. Common St, East St, School St. ~55 min to South Station." },
-      { name: "Plymouth Historic Downtown — waterfront district", notes: "Most historic character + architectural interest per dollar. Commuter rail exists but incidental (~90 min). Best for town identity over walkable dining. Under $950k very achievable." },
-    ]
-  }
+// Neighborhood tier data
+const NBHD_TIERS = {
+  'tier1-rozzie-tappan':  { tier:'tier1', label:'Roslindale — Tappan/Walter/Arboretum edge', score:1.0 },
+  'tier1-rozzie-village': { tier:'tier1', label:'Roslindale — Metropolitan Hill / Adams Park', score:0.95 },
+  'tier1-wr-centre':      { tier:'tier1', label:'West Roxbury — Centre St + Corey St', score:0.9 },
+  'tier1-wr-bellevue':    { tier:'tier1', label:'West Roxbury — Bellevue Hill', score:0.85 },
+  'tier1-wr-millennium':  { tier:'tier1', label:'West Roxbury — Millennium Park edge', score:0.8 },
+  'tier1-hp-fairmount':   { tier:'tier1', label:'Hyde Park — Fairmount Hill', score:0.75 },
+  'tier2-dedham':         { tier:'tier2', label:'Dedham Square — near Endicott station', score:0.8 },
+  'tier2-natick':         { tier:'tier2', label:'Natick Center — village core', score:0.85 },
+  'tier2-norwood':        { tier:'tier2', label:'Norwood Center — near station', score:0.7 },
+  'tier2-walpole':        { tier:'tier2', label:'Walpole Center — near Union Station', score:0.65 },
+  'tier2-plymouth':       { tier:'tier2', label:'Plymouth Historic Downtown', score:0.7 },
+  'other-rozzie':         { tier:'other', label:'Roslindale (outside target streets)', score:0.4 },
+  'other-wr':             { tier:'other', label:'West Roxbury (outside target streets)', score:0.35 },
+  'other-hp':             { tier:'other', label:'Hyde Park (outside Fairmount Hill)', score:0.2 },
+  'other-jp':             { tier:'other', label:'Jamaica Plain', score:0.5 },
+  'other-metro':          { tier:'other', label:'Other area', score:0.1 },
+  'other':                { tier:'other', label:'Outside target areas', score:0.0 },
 };
 
-const state = {};
-CRITERIA.forEach(c => { state[c.id] = { weight: c.weight, notes: "" }; });
-let activeGroup = "Basics";
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let weights = {};
+let listings = [];
+let editingId = null;
 
-function init() {
-  const tabBar = document.getElementById("tabBar");
-  GROUPS.forEach(g => {
-    const btn = document.createElement("button");
-    btn.className = "tab" + (g === activeGroup ? " active" : "");
-    btn.textContent = g;
-    btn.onclick = () => switchGroup(g);
-    tabBar.appendChild(btn);
-  });
-  renderCriteria();
+CRITERIA.forEach(c => weights[c.id] = c.weight);
+weights['neighborhood_tier'] = 7;
+
+try { const s = localStorage.getItem('he_listings'); if(s) listings = JSON.parse(s); } catch(e){}
+try { const s = localStorage.getItem('he_weights'); if(s) weights = {...weights,...JSON.parse(s)}; } catch(e){}
+
+function save() {
+  localStorage.setItem('he_listings', JSON.stringify(listings));
+  localStorage.setItem('he_weights', JSON.stringify(weights));
 }
 
-function switchGroup(g) {
-  activeGroup = g;
-  document.querySelectorAll(".tab").forEach((btn, i) => {
-    btn.classList.toggle("active", GROUPS[i] === g);
-  });
-  renderCriteria();
+// ─── SCORING ───────────────────────────────────────────────────────────────
+function scoreClass(s) {
+  if(s>=80) return 'great'; if(s>=65) return 'good'; if(s>=45) return 'ok'; return 'poor';
 }
 
+function calcScore(listing) {
+  let total=0, max=0;
+  CRITERIA.forEach(c => {
+    const w = weights[c.id]||0;
+    if(!w) return;
+    max += w;
+    const val = listing.scores?.[c.id];
+    if(val===undefined||val===null) return;
+    if(c.type==='stars') {
+      total += w * (val/5);
+    } else {
+      const tier = c.tiers?.[val];
+      if(tier) total += w * tier.score;
+    }
+  });
+  // Neighborhood tier
+  const nw = weights['neighborhood_tier']||0;
+  max += nw;
+  const nbhd = NBHD_TIERS[listing.neighborhood_tier||'other'];
+  total += nw * (nbhd?.score||0);
+
+  return max>0 ? Math.round((total/max)*100) : 0;
+}
+
+function getNbhdInfo(key) {
+  return NBHD_TIERS[key||'other'] || NBHD_TIERS['other'];
+}
+
+// ─── RENDER CRITERIA ───────────────────────────────────────────────────────
 function renderCriteria() {
-  const list = document.getElementById("criteriaList");
-  list.innerHTML = "";
-  CRITERIA.filter(c => c.group === activeGroup).forEach(c => {
-    const p = state[c.id];
-    const wLabel = WEIGHT_LABELS[p.weight] || "";
-    const wClass = p.weight >= 7 ? "high" : p.weight >= 4 ? "mid" : "low";
-    const div = document.createElement("div");
-    div.className = "criterion";
-    div.innerHTML = `
-      <div class="criterion-header">
-        <div>
-          <span class="criterion-label">${c.label}</span>
-          <span class="criterion-hint">${c.hint}</span>
-        </div>
-        <span class="weight-label ${wClass}" id="wlabel-${c.id}">${wLabel}</span>
-      </div>
-      <input type="range" min="0" max="8" step="1" value="${p.weight}" id="range-${c.id}"
-        oninput="updateWeight('${c.id}', this.value)" style="margin-bottom:0">
-      <textarea class="pref-input" rows="2" placeholder="${c.placeholder}"
-        id="notes-${c.id}" oninput="updateNotes('${c.id}', this.value)">${p.notes}</textarea>
-    `;
-    list.appendChild(div);
-    updateRangeStyle(c.id, p.weight);
+  const groups = {basics:'crit-basics',space:'crit-space',systems:'crit-systems',character:'crit-character',extras:'crit-extras'};
+  Object.values(groups).forEach(id => document.getElementById(id).innerHTML='');
+  CRITERIA.forEach(c => {
+    const el = document.getElementById(groups[c.group]);
+    if(!el) return;
+    const w = weights[c.id]||c.weight;
+    let tiersHTML = '';
+    if(c.type==='stars') {
+      tiersHTML = `<div class="stars" id="stars-${c.id}" style="margin-top:6px">${[1,2,3,4,5].map(i=>`<span class="star" onclick="void(0)" title="${c.starLabels[i-1]}">★</span>`).join('')}</div><div style="font-size:11px;color:#888;margin-top:3px">Rating scale: 1=no character → 5=exceptional</div>`;
+    } else {
+      tiersHTML = `<div class="tiers">${c.tiers.map((t,i)=>`<div class="tier ${i===0?'full':i===1?'partial':i===2?'partial':'low'}"><span>${t.label} (${Math.round(t.score*100)}%)</span>${t.desc}</div>`).join('')}</div>`;
+    }
+    el.innerHTML += `<div class="crit-row"><div class="crit-top"><span class="crit-name">${c.name}</span><span class="crit-wval" id="wval-${c.id}">${w}</span><input type="range" min="1" max="10" value="${w}" oninput="updateWeight('${c.id}',this.value)"></div>${tiersHTML}</div>`;
   });
 }
 
 function updateWeight(id, val) {
-  state[id].weight = Number(val);
-  const wLabel = WEIGHT_LABELS[Number(val)] || "";
-  const wClass = val >= 7 ? "high" : val >= 4 ? "mid" : "low";
-  const el = document.getElementById("wlabel-" + id);
-  if (el) { el.textContent = wLabel; el.className = "weight-label " + wClass; }
-  updateRangeStyle(id, val);
+  weights[id] = Number(val);
+  const el = document.getElementById('wval-'+id);
+  if(el) el.textContent = val;
+  save();
+  renderListings();
 }
 
-function updateRangeStyle(id, val) {
-  const el = document.getElementById("range-" + id);
-  if (el) el.style.background = `linear-gradient(to right, #c8a96e ${val * 12.5}%, #2a2a2a ${val * 12.5}%)`;
-}
-
-function updateNotes(id, val) {
-  state[id].notes = val;
-  const filled = CRITERIA.filter(c => state[c.id].notes.trim()).length;
-  document.getElementById("progressCount").textContent = `${filled} of ${CRITERIA.length} criteria described`;
-}
-
-function buildNeighborhoodContext() {
-  const t1Areas = NEIGHBORHOOD_TIERS.tier1.areas.map(a => `    - ${a.name}: ${a.notes}`).join("\n");
-  const t2Areas = NEIGHBORHOOD_TIERS.tier2.areas.map(a => `    - ${a.name}: ${a.notes}`).join("\n");
-  return `
-NEIGHBORHOOD TIER RANKING (pre-researched by the buyer — factor heavily into scoring):
-
-TIER 1 — "Woven into Boston" (highest neighborhood preference, +10 to +15 score bonus if in these specific areas):
-${t1Areas}
-
-TIER 2 — "Town with own identity, south/west of Boston" (strong preference, +5 to +10 score bonus if in these specific areas):
-${t2Areas}
-
-SCORING GUIDANCE FOR NEIGHBORHOOD:
-- A listing in a Tier 1 target area should receive a significant score boost (up to +15 points) for neighborhood fit
-- A listing in a Tier 2 target area should receive a meaningful score boost (up to +10 points) for neighborhood fit
-- A listing in a Tier 1 or Tier 2 town but OUTSIDE the specific target area (e.g. outer Roslindale, Route 9 Natick) should receive a smaller or no bonus
-- A listing in a non-tiered area should be scored purely on property criteria with no neighborhood bonus
-- Always state the tier and specific area match (or lack thereof) in your analysis
-- Include a "neighborhood_tier" field in your JSON: "tier1", "tier2", or "other"
-- Include a "neighborhood_fit_score" field (0–100) reflecting how well the specific location matches the target areas above
-- Include a "neighborhood_area" field naming the specific sub-area match (e.g. "Roslindale — Tappan St area") or "Outside target areas" if not in a tier`;
-}
-
-function buildPrompt() {
-  const lines = CRITERIA.map(c => {
-    const p = state[c.id];
-    const wLabel = WEIGHT_LABELS[p.weight] || p.weight;
-    const notes = p.notes ? ` — "${p.notes}"` : "";
-    return `• ${c.label} [importance: ${wLabel}]${notes}`;
-  });
-
-  return `You are a real estate expert helping a buyer find homes anywhere within a 90-minute drive of Boston, MA. This includes Greater Boston, MetroWest, the South Shore, North Shore, the Merrimack Valley, southern NH, Rhode Island, and coastal/rural MA towns within that radius.
-
-Using web search, find 4–6 active listings currently on the market that best match the buyer's priorities AND neighborhood preferences below. For each listing provide:
-1. Full address
-2. Price
-3. Zillow or Redfin URL (real, working link)
-4. An overall match score out of 100 (weighted blend of property criteria + neighborhood tier fit)
-5. 2–3 sentence analysis mentioning both property fit AND neighborhood tier placement
-6. Key strengths (2–3 bullets)
-7. Key concerns (1–2 bullets)
-
-Rank best-fit first. Be honest about tradeoffs. Only include listings actually active on the market today.
-
-BUYER PRIORITIES (weight 1=low, 8=must-have):
-${lines.join("\n")}
-${buildNeighborhoodContext()}
-
-Search for real current listings on Zillow, Redfin, or realtor.com. Prioritize listings in the Tier 1 and Tier 2 target areas, but include others if they are exceptional property matches. Return results as a JSON array:
-[
-  {
-    "address": "19 Tappan St, Boston, MA 02131",
-    "price": "$849,000",
-    "url": "https://www.redfin.com/...",
-    "score": 88,
-    "neighborhood_tier": "tier1",
-    "neighborhood_area": "Roslindale — Tappan St / Arboretum edge",
-    "neighborhood_fit_score": 95,
-    "analysis": "...",
-    "strengths": ["...", "..."],
-    "concerns": ["..."]
+// ─── LISTINGS ──────────────────────────────────────────────────────────────
+function renderListings() {
+  const el = document.getElementById('listings-list');
+  document.getElementById('listing-count').textContent = listings.length;
+  if(!listings.length) {
+    el.innerHTML='<div class="empty"><div style="font-size:32px">🏠</div><p>No listings yet. Add one to get started.</p></div>';
+    return;
   }
-]
-
-Return ONLY the JSON array, no other text.`;
+  const scored = listings.map(l=>({...l,_score:calcScore(l)})).sort((a,b)=>b._score-a._score);
+  el.innerHTML = scored.map((l,i)=>{
+    const sc = scoreClass(l._score);
+    const nbhd = getNbhdInfo(l.neighborhood_tier);
+    const tierBadgeClass = nbhd.tier==='tier1'?'tier1':nbhd.tier==='tier2'?'tier2':'other';
+    const tierEmoji = nbhd.tier==='tier1'?'🟢':nbhd.tier==='tier2'?'🟡':'⚫';
+    const nbhdScore = Math.round((nbhd.score||0)*100);
+    const nbhdBarColor = nbhdScore>=80?'#16a34a':nbhdScore>=55?'#d97706':'#9ca3af';
+    return `<div class="listing-card">
+      <div class="listing-card-header" onclick="toggleExpand('${l.id}')">
+        <div class="listing-rank">#${i+1}</div>
+        <div class="listing-info">
+          <div class="listing-address">${l.address||'Untitled listing'}</div>
+          <div class="listing-meta">
+            <span>${l.price||'—'}</span>
+            ${l.url?`<a href="${l.url}" target="_blank" onclick="event.stopPropagation()" style="color:#2563eb;text-decoration:none">View listing →</a>`:''}
+            <span class="nbhd-badge ${tierBadgeClass}">${tierEmoji} ${nbhd.label}</span>
+          </div>
+        </div>
+        <div class="listing-score ${sc}">${l._score}</div>
+      </div>
+      <div id="expand-${l.id}" class="listing-expanded hidden">
+        <div class="nbhd-bar-wrap">
+          <div class="nbhd-bar-label"><span>Neighborhood fit</span><span>${nbhdScore}/100</span></div>
+          <div class="nbhd-bar-track"><div class="nbhd-bar-fill" style="width:${nbhdScore}%;background:${nbhdBarColor}"></div></div>
+        </div>
+        <div class="score-breakdown">${CRITERIA.map(c=>{
+          const val = l.scores?.[c.id];
+          if(val===undefined||val===null) return `<div class="score-item"><span>${c.name}</span><span class="val none">—</span></div>`;
+          let display, cls;
+          if(c.type==='stars'){
+            display='★'.repeat(val)+'☆'.repeat(5-val);
+            cls=val>=4?'full':val>=3?'partial':val>=2?'low':'none';
+          } else {
+            const t=c.tiers?.[val];
+            display=t?t.label:'—';
+            cls=val===0?'full':val===1?'partial':val===2?'low':'none';
+          }
+          return `<div class="score-item"><span>${c.name}</span><span class="val ${cls}">${display}</span></div>`;
+        }).join('')}</div>
+        <div class="listing-actions">
+          <button class="btn btn-secondary" onclick="editListing('${l.id}')">Edit scores</button>
+          <button class="btn btn-danger" onclick="deleteListing('${l.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-async function runSearch() {
-  const btn = document.getElementById("findBtn");
-  const status = document.getElementById("statusText");
-  const errorBox = document.getElementById("errorBox");
-  const resultsSection = document.getElementById("resultsSection");
+function toggleExpand(id) {
+  const el = document.getElementById('expand-'+id);
+  if(el) el.classList.toggle('hidden');
+}
 
-  btn.disabled = true;
-  status.style.display = "inline";
-  errorBox.style.display = "none";
-  resultsSection.style.display = "none";
+function deleteListing(id) {
+  if(!confirm('Delete this listing?')) return;
+  listings = listings.filter(l=>l.id!==id);
+  save(); renderListings();
+}
+
+function editListing(id) {
+  const l = listings.find(x=>x.id===id);
+  if(!l) return;
+  editingId = id;
+  document.getElementById('f-address').value = l.address||'';
+  document.getElementById('f-price').value = l.price||'';
+  document.getElementById('f-url').value = l.url||'';
+  document.getElementById('f-year').value = l.year||'';
+  document.getElementById('f-nbhd-tier').value = l.neighborhood_tier||'other';
+  showPanel('add');
+  buildManualForm(l.scores||{});
+  document.getElementById('manual-form').style.display='block';
+}
+
+// ─── ADD / SCORE ────────────────────────────────────────────────────────────
+async function scoreWithAI() {
+  const description = document.getElementById('f-description').value.trim();
+  if(!description) { alert('Please paste a listing description first.'); return; }
+  const status = document.getElementById('ai-status');
+  status.style.display='block'; status.textContent='Analyzing listing…';
+
+  const criteriaDesc = CRITERIA.map(c=>{
+    if(c.type==='stars') return `${c.id} (${c.name}): Rate 1–5. 1=${c.starLabels[0]}, 3=${c.starLabels[2]}, 5=${c.starLabels[4]}`;
+    return `${c.id} (${c.name}): ${c.tiers.map((t,i)=>`${i}=${t.desc}`).join(' | ')}`;
+  }).join('\n');
+
+  const prompt = `You are scoring a house listing against specific criteria. Return ONLY a JSON object, no other text.
+
+LISTING TEXT:
+${description}
+
+CRITERIA TO SCORE (return the index number for each):
+${criteriaDesc}
+
+Also extract: address (string), price (string with $), year_built (string).
+
+Return this exact JSON structure:
+{
+  "address": "...",
+  "price": "$...",
+  "year_built": "1925",
+  "scores": {
+    "price": 0,
+    "property_type": 0,
+    "t_walk": 0,
+    "safety": 0,
+    "sqft": 0,
+    "beds": 0,
+    "yard": 0,
+    "layout": 0,
+    "condition": 0,
+    "roof": 0,
+    "hvac": 0,
+    "electrical": 0,
+    "plumbing": 0,
+    "windows": 0,
+    "architecture": 3,
+    "natural_light": 0,
+    "neighborhood_feel": 0,
+    "historic_age": 0,
+    "garage_basement": 0,
+    "parking": 0,
+    "restaurants_walk": 0,
+    "nature_walk": 0
+  }
+}`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 4000,
-        tools: [{ type: "web_search_20250305", name: "web_search" }],
-        messages: [{ role: "user", content: buildPrompt() }]
-      })
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
+    const data = await res.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if(!jsonMatch) throw new Error('No JSON in response');
+    const parsed = JSON.parse(jsonMatch[0]);
 
-    const data = await response.json();
-    const textBlocks = (data.content || []).filter(b => b.type === "text");
-    const fullText = textBlocks.map(b => b.text).join("\n").trim();
-    const jsonMatch = fullText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) throw new Error("No listings found. Try adding more criteria notes and searching again.");
-    const listings = JSON.parse(jsonMatch[0]);
-    renderResults(listings);
-  } catch (e) {
-    errorBox.textContent = e.message || "Something went wrong. Please try again.";
-    errorBox.style.display = "block";
-  } finally {
-    btn.disabled = false;
-    status.style.display = "none";
+    // Pre-fill form fields if address/price found
+    if(parsed.address && !document.getElementById('f-address').value) document.getElementById('f-address').value = parsed.address;
+    if(parsed.price && !document.getElementById('f-price').value) document.getElementById('f-price').value = parsed.price;
+    if(parsed.year_built && !document.getElementById('f-year').value) document.getElementById('f-year').value = parsed.year_built;
+
+    status.textContent='Done! Review scores below, then save.';
+    buildManualForm(parsed.scores||{});
+    document.getElementById('manual-form').style.display='block';
+  } catch(e) {
+    status.textContent='Error: '+e.message+'. Try adding manually.';
   }
 }
 
-function renderResults(listings) {
-  const section = document.getElementById("resultsSection");
-  document.getElementById("resultsHeader").textContent = `${listings.length} listings ranked by fit`;
-  const list = document.getElementById("resultsList");
-  list.innerHTML = "";
-
-  listings.forEach((r, i) => {
-    const scoreColor = r.score >= 80 ? "#c8a96e" : r.score >= 65 ? "#8aaa88" : "#888";
-    const card = document.createElement("div");
-    card.className = "result-card";
-    card.style.animationDelay = `${i * 0.08}s`;
-
-    // Tier badge
-    const tierInfo = r.neighborhood_tier === "tier1"
-      ? { cls: "tier1", label: "Tier 1 — " + (r.neighborhood_area || "Boston neighborhood") }
-      : r.neighborhood_tier === "tier2"
-      ? { cls: "tier2", label: "Tier 2 — " + (r.neighborhood_area || "Target town") }
-      : { cls: "tier-other", label: r.neighborhood_area || "Outside target areas" };
-
-    const tierBadge = `<span class="tier-badge ${tierInfo.cls}">${tierInfo.label}</span>`;
-
-    // Neighborhood fit bar
-    const nfScore = r.neighborhood_fit_score || 0;
-    const nfColor = nfScore >= 80 ? "#8aaa68" : nfScore >= 55 ? "#c8a96e" : "#666";
-    const neighborhoodBar = `
-      <div class="neighborhood-fit">
-        <div class="nf-label">Neighborhood fit <span>${nfScore}/100</span></div>
-        <div class="nf-bar-track">
-          <div class="nf-bar-fill" style="width:${nfScore}%;background:${nfColor}"></div>
-        </div>
-      </div>`;
-
-    const strengths = (r.strengths || []).map(s => `<div class="col-item green">${s}</div>`).join("");
-    const concerns = (r.concerns || []).map(s => `<div class="col-item red">${s}</div>`).join("");
-    const viewLink = r.url ? `<a class="view-link" href="${r.url}" target="_blank" rel="noopener noreferrer">View Listing →</a>` : "";
-    const bestBadge = i === 0 ? `<div class="best-badge">Best match</div>` : "";
-
-    card.innerHTML = `
-      <div class="card-header">
-        <div class="score-ring" style="border-color:${scoreColor};color:${scoreColor}">${r.score}</div>
-        <div class="card-meta">
-          <div class="card-top">
-            <div>
-              <div class="card-address">${r.address}</div>
-              <div class="card-price">${r.price}</div>
-              ${tierBadge}
-            </div>
-            ${viewLink}
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        ${neighborhoodBar}
-        <p class="card-analysis">${r.analysis}</p>
-        <div class="card-cols">
-          <div>
-            <div class="col-label green">Strengths</div>
-            ${strengths}
-          </div>
-          <div>
-            <div class="col-label red">Concerns</div>
-            ${concerns}
-          </div>
-        </div>
-      </div>
-      ${bestBadge}
-    `;
-    list.appendChild(card);
-  });
-
-  section.style.display = "block";
-  section.scrollIntoView({ behavior: "smooth", block: "start" });
+function addManually() {
+  buildManualForm({});
+  document.getElementById('manual-form').style.display='block';
 }
 
-init();
+function buildManualForm(existingScores) {
+  const el = document.getElementById('manual-criteria');
+  el.innerHTML = CRITERIA.map(c=>{
+    const val = existingScores[c.id];
+    if(c.type==='stars') {
+      const v = val||0;
+      return `<div class="crit-row"><div class="crit-name" style="font-size:13px;font-weight:500;margin-bottom:6px">${c.name}</div>
+        <div class="stars" id="mstars-${c.id}">${[1,2,3,4,5].map(i=>`<span class="star${i<=v?' on':''}" onclick="setStars('${c.id}',${i})" title="${c.starLabels[i-1]}">★</span>`).join('')}</div>
+        <div style="font-size:11px;color:#888;margin-top:3px" id="star-label-${c.id}">${v>0?c.starLabels[v-1]:'Click to rate'}</div>
+      </div>`;
+    }
+    return `<div class="crit-row"><div class="crit-name" style="font-size:13px;font-weight:500;margin-bottom:6px">${c.name}</div>
+      <div class="tiers">${c.tiers.map((t,i)=>`<div class="tier${val===i?' selected':''}" onclick="selectTier('${c.id}',${i},this)"><span>${t.label}</span>${t.desc}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectTier(id, idx, el) {
+  el.closest('.tiers').querySelectorAll('.tier').forEach(t=>t.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function setStars(id, val) {
+  const container = document.getElementById('mstars-'+id);
+  container.querySelectorAll('.star').forEach((s,i)=>{s.className='star'+(i<val?' on':'');});
+  const c = CRITERIA.find(x=>x.id===id);
+  const lbl = document.getElementById('star-label-'+id);
+  if(lbl && c) lbl.textContent = c.starLabels[val-1];
+  container.dataset.val = val;
+}
+
+function saveManual() {
+  const address = document.getElementById('f-address').value.trim();
+  if(!address) { alert('Please enter an address.'); return; }
+  const scores = {};
+  CRITERIA.forEach(c=>{
+    if(c.type==='stars') {
+      const container = document.getElementById('mstars-'+c.id);
+      scores[c.id] = container ? Number(container.dataset.val||0) : 0;
+    } else {
+      const sel = document.querySelector(`#manual-criteria [onclick*="selectTier('${c.id}'"][class*="selected"]`);
+      if(sel) {
+        const match = sel.getAttribute('onclick').match(/selectTier\('[^']+',(\d+)/);
+        if(match) scores[c.id] = Number(match[1]);
+      }
+    }
+  });
+
+  const listing = {
+    id: editingId || ('l'+Date.now()),
+    address,
+    price: document.getElementById('f-price').value.trim(),
+    url: document.getElementById('f-url').value.trim(),
+    year: document.getElementById('f-year').value.trim(),
+    neighborhood_tier: document.getElementById('f-nbhd-tier').value,
+    scores,
+    added: editingId ? (listings.find(l=>l.id===editingId)?.added||new Date().toISOString()) : new Date().toISOString()
+  };
+
+  if(editingId) {
+    listings = listings.map(l=>l.id===editingId?listing:l);
+    editingId = null;
+  } else {
+    listings.push(listing);
+  }
+  save();
+
+  // Reset form
+  ['f-address','f-price','f-url','f-year','f-description'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-nbhd-tier').value='other';
+  document.getElementById('manual-form').style.display='none';
+  document.getElementById('ai-status').style.display='none';
+
+  showPanel('listings');
+  renderListings();
+}
+
+// ─── DATA ──────────────────────────────────────────────────────────────────
+function renderDataTable() {
+  const el = document.getElementById('data-table-wrap');
+  if(!listings.length){el.innerHTML='<div class="empty"><p>No listings to display.</p></div>';return;}
+  const scored = listings.map(l=>({...l,_score:calcScore(l)})).sort((a,b)=>b._score-a._score);
+  el.innerHTML=`<table class="data-table"><thead><tr><th>#</th><th>Address</th><th>Price</th><th>Neighborhood</th><th>Score</th><th>Added</th></tr></thead><tbody>${
+    scored.map((l,i)=>`<tr><td>${i+1}</td><td>${l.address||'—'}</td><td>${l.price||'—'}</td><td>${getNbhdInfo(l.neighborhood_tier).label}</td><td><strong>${l._score}</strong></td><td>${l.added?new Date(l.added).toLocaleDateString():'—'}</td></tr>`).join('')
+  }</tbody></table>`;
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify({listings,weights},null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='house-evaluator-data.json'; a.click();
+}
+
+function importData(input) {
+  const file = input.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(d.listings) listings=d.listings;
+      if(d.weights) weights={...weights,...d.weights};
+      save(); renderCriteria(); renderListings(); renderDataTable();
+      alert('Imported successfully.');
+    }catch(err){alert('Error importing: '+err.message);}
+  };
+  reader.readAsText(file);
+}
+
+function clearAll() {
+  if(!confirm('Delete all listings? This cannot be undone.')) return;
+  listings=[]; save(); renderListings(); renderDataTable();
+}
+
+// ─── NAVIGATION ────────────────────────────────────────────────────────────
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  const tabs={criteria:0,listings:1,add:2,data:3};
+  document.querySelectorAll('.tab')[tabs[name]]?.classList.add('active');
+  if(name==='listings') renderListings();
+  if(name==='data') renderDataTable();
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+renderCriteria();
+renderListings();
 </script>
 </body>
 </html>
