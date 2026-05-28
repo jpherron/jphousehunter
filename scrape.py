@@ -367,11 +367,10 @@ def _auto_score(price_num: int, sqft: int | None, beds: int | None, year: int | 
         "parking","restaurants_walk","nature_walk",
     ]}
 
-    # Price (index 0=Full<850k, 1=Good 850-900k, 2=Stretch 900-950k, 3=Over)
-    if price_num < 850_000:    scores["price"] = 0
-    elif price_num < 900_000:  scores["price"] = 1
-    elif price_num <= 950_000: scores["price"] = 2
-    else:                      scores["price"] = 3
+    # Price (0=Full≤$950k, 1=Good $950k–$1M, 2=Over>$1M)
+    if price_num <= 950_000:      scores["price"] = 0
+    elif price_num <= 1_000_000:  scores["price"] = 1
+    else:                         scores["price"] = 2
 
     # Property type — we only scrape houses, so always SFH (Full)
     scores["property_type"] = 0

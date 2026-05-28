@@ -277,10 +277,9 @@ input[type=range]{width:100%;accent-color:#2563eb}
 const CRITERIA = [
   { id:'price', name:'Price', group:'basics', weight:8,
     tiers:[
-      {label:'Full',desc:'Under $850k',score:1.0},
-      {label:'Good',desc:'$850k–$900k',score:0.7},
-      {label:'Stretch',desc:'$900k–$950k',score:0.3},
-      {label:'Over',desc:'Above $950k',score:0.0}
+      {label:'Full',desc:'Under $950k',score:1.0},
+      {label:'Good',desc:'$950k–$1M',score:0.5},
+      {label:'Over',desc:'Above $1M',score:0.0},
     ]},
   { id:'property_type', name:'Property Type', group:'basics', weight:7,
     tiers:[
