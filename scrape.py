@@ -388,11 +388,11 @@ def _auto_score(price_num: int, sqft: int | None, beds: int | None, year: int | 
         elif beds == 2: scores["beds"] = 1
         elif beds == 1: scores["beds"] = 3
 
-    # Historic age (0=pre-1920, 1=1920-1939, 2=1940-1960, 3=post-1960)
+    # Historic age (0=pre-1930, 1=2016+, 2=1930-1959, 3=1960-2015)
     if year:
-        if year < 1920:              scores["historic_age"] = 0
-        elif year < 1940:            scores["historic_age"] = 1
-        elif year <= 1960:           scores["historic_age"] = 2
+        if year < 1930:              scores["historic_age"] = 0
+        elif year >= 2016:           scores["historic_age"] = 1
+        elif year < 1960:            scores["historic_age"] = 2
         else:                        scores["historic_age"] = 3
 
     return scores
