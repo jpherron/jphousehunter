@@ -261,7 +261,8 @@ input[type=range]{width:100%;accent-color:#2563eb}
 
   <!-- DATA PANEL -->
   <div id="panel-data" class="panel">
-    <div class="data-actions">
+    <div style="font-size:12px;color:#888;margin-bottom:10px" id="sync-status">Loading from GitHub…</div>
+<div class="data-actions">
       <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
       <button class="btn btn-secondary" onclick="document.getElementById('import-input').click()">Import JSON</button>
       <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
@@ -454,8 +455,28 @@ let editingId = null;
 CRITERIA.forEach(c => weights[c.id] = c.weight);
 weights['neighborhood_tier'] = 7;
 
-try { const s = localStorage.getItem('he_listings'); if(s) listings = JSON.parse(s); } catch(e){}
-try { const s = localStorage.getItem('he_weights'); if(s) weights = {...weights,...JSON.parse(s)}; } catch(e){}
+// Load from GitHub data.json on startup, fall back to localStorage
+const DATA_URL = 'https://raw.githubusercontent.com/jpherron/jphousehunter/main/data.json?nocache=' + Date.now();
+
+async function loadData() {
+  try {
+    const res = await fetch(DATA_URL);
+    if (res.ok) {
+      const d = await res.json();
+      if (d.listings) listings = d.listings;
+      if (d.weights) weights = {...weights, ...d.weights};
+      renderListings();
+      renderDataTable();
+      const el = document.getElementById('sync-status');
+      if (el) el.textContent = 'Loaded from GitHub · ' + listings.length + ' listings';
+      return;
+    }
+  } catch(e) {}
+  // Fallback to localStorage
+  try { const s = localStorage.getItem('he_listings'); if(s) listings = JSON.parse(s); } catch(e){}
+  try { const s = localStorage.getItem('he_weights'); if(s) weights = {...weights,...JSON.parse(s)}; } catch(e){}
+  renderListings();
+}
 
 function save() {
   localStorage.setItem('he_listings', JSON.stringify(listings));
@@ -811,7 +832,7 @@ function showPanel(name) {
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 renderCriteria();
-renderListings();
+loadData();
 </script>
 </body>
 </html>
