@@ -401,24 +401,8 @@ def _auto_score(price_num: int, sqft: int | None, beds: int | None, year: int | 
 DETAIL_WORKERS = 8   # concurrent detail-page fetches
 DETAIL_DELAY   = 0.5 # seconds between requests per worker
 
-OFF_MARKET_SENTINEL = -1  # returned when detail page shows listing is no longer active
-
-OFF_MARKET_PHRASES = [
-    '"status":"Pending"', '"status":"Contingent"', '"status":"Sold"',
-    '"status":"Off Market"', '"status":"Canceled"',
-    '>Pending<', '>Contingent<', '>Under Contract<', '>Off Market<',
-    'listingStatus":"PENDING"', 'listingStatus":"CONTINGENT"',
-    'listingStatus":"SOLD"',
-]
-
-
 def fetch_year_built(url: str) -> int | None:
-    """
-    Fetch a Redfin property detail page, check it's still active,
-    and extract year built.
-    Returns OFF_MARKET_SENTINEL if the listing is no longer active.
-    Returns None if year can't be determined.
-    """
+    """Fetch a Redfin property detail page and extract year built."""
     if not url or "redfin.com" not in url:
         return None
     try:
@@ -427,9 +411,6 @@ def fetch_year_built(url: str) -> int | None:
         if resp.status_code != 200:
             return None
         html = resp.text
-        # Check if listing went off-market since we scraped it
-        if any(phrase in html for phrase in OFF_MARKET_PHRASES):
-            return OFF_MARKET_SENTINEL
         # Fast path: yearBuilt in embedded JSON
         m = re.search(r'"yearBuilt"\s*:\s*(\d{4})', html)
         if m:
@@ -457,28 +438,19 @@ def enrich_year_built(listings: list[dict], debug: bool = False) -> None:
         year = fetch_year_built(listing["url"])
         return listing["id"], year
 
+    # Build id→listing index for fast lookup
+    by_id = {l["id"]: l for l in listings}
     found = 0
-    off_market_ids = set()
     with ThreadPoolExecutor(max_workers=DETAIL_WORKERS) as pool:
         futures = {pool.submit(fetch_one, l): l for l in need}
         for future in as_completed(futures):
             lid, year = future.result()
-            if year == OFF_MARKET_SENTINEL:
-                off_market_ids.add(lid)
-            elif year:
-                for l in listings:
-                    if l["id"] == lid:
-                        l["year"] = str(year)
-                        l["scores"]["historic_age"] = _age_score(year)
-                        found += 1
-                        if debug:
-                            print(f"  {l['address']}: {year}")
-                        break
-
-    if off_market_ids:
-        before = len(listings)
-        listings[:] = [l for l in listings if l["id"] not in off_market_ids]
-        print(f"  Removed {before - len(listings)} off-market listings detected on detail page")
+            if year and lid in by_id:
+                by_id[lid]["year"] = str(year)
+                by_id[lid]["scores"]["historic_age"] = _age_score(year)
+                found += 1
+                if debug:
+                    print(f"  {by_id[lid]['address']}: {year}")
 
     print(f"  Got year built for {found}/{len(need)} listings")
 
@@ -645,14 +617,20 @@ def main():
 
     print(f"\nScraped {len(all_new)} total new listings before dedup")
 
-    # Enrich new listings with year built from detail pages
-    # (only fetches for listings not already in existing data)
+    # Enrich new listings with year built from detail pages.
+    # Pass all_new directly — enrich_year_built skips listings that already
+    # have a year, and existing listings will be filtered by dedup_merge anyway.
     existing_addrs = {re.sub(r'\W+', ' ', l["address"]).lower().strip() for l in existing_listings}
     truly_new = [
         l for l in all_new
         if re.sub(r'\W+', ' ', l["address"]).lower().strip() not in existing_addrs
     ]
     enrich_year_built(truly_new, debug=args.debug)
+    # Reflect year/score updates back into all_new (enrich mutates truly_new in-place)
+    truly_new_by_id = {l["id"]: l for l in truly_new}
+    for i, l in enumerate(all_new):
+        if l["id"] in truly_new_by_id:
+            all_new[i] = truly_new_by_id[l["id"]]
 
     # Merge with existing
     merged = dedup_merge(all_new, existing_listings)
