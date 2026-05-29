@@ -470,31 +470,62 @@ def _score_completeness(scores: dict) -> int:
     return sum(1 for v in scores.values() if v is not None)
 
 
+SCRAPED_ZIPS = {zip for zip, _, _ in SEARCH_AREAS}
+
+
 def dedup_merge(new_listings: list[dict], existing: list[dict]) -> list[dict]:
     """
     Merge scraped listings with existing data.json listings.
-    - Existing manually-scored listings are always kept as-is.
-    - Scraped duplicates of existing listings are dropped (manual scores win).
-    - Among scraped duplicates of each other, keep the one with more complete scores.
-    - New listings are appended.
-    Returns the merged list.
+
+    Special handling for Zillow-URL listings in scraped zip codes:
+    - If a scraped Redfin listing matches an existing Zillow-URL listing by
+      address, upgrade the URL to the Redfin one (Zillow zpids get reused
+      after a sale, making them silently stale).
+    - If a Zillow-URL listing is in a scraped zip and Redfin no longer shows
+      it as active, remove it (it's likely sold/pending).
     """
     def norm_addr(a: str) -> str:
         return re.sub(r'\W+', ' ', a).lower().strip()
 
-    # Build lookup from normalized address → existing listing
-    existing_by_addr = {norm_addr(l["address"]): l for l in existing}
-    merged = list(existing)
+    def listing_zip(l: dict) -> str:
+        m = re.search(r'\b(\d{5})\b', l.get("address",""))
+        return m.group(1) if m else ""
 
-    # Among new scraped listings, resolve duplicates (same address, different areas)
+    scraped_addrs = {norm_addr(l["address"]) for l in new_listings}
+
+    # Drop Zillow-URL listings in scraped zips that Redfin no longer shows active
+    surviving_existing = []
+    dropped = 0
+    for l in existing:
+        is_zillow = "zillow.com" in l.get("url","")
+        in_scraped_zip = listing_zip(l) in SCRAPED_ZIPS
+        if is_zillow and in_scraped_zip and norm_addr(l["address"]) not in scraped_addrs:
+            print(f"  Dropping stale Zillow listing (not in Redfin results): {l['address']}")
+            dropped += 1
+        else:
+            surviving_existing.append(l)
+    if dropped:
+        print(f"  Removed {dropped} stale Zillow-URL listings from scraped areas")
+
+    existing_by_addr = {norm_addr(l["address"]): l for l in surviving_existing}
+    merged = list(surviving_existing)
+
+    # When a scraped listing matches an existing Zillow-URL entry, upgrade the URL
+    for l in new_listings:
+        key = norm_addr(l["address"])
+        if key in existing_by_addr:
+            ex = existing_by_addr[key]
+            if "zillow.com" in ex.get("url","") and l.get("url",""):
+                ex["url"] = l["url"]  # upgrade to Redfin URL in-place
+            continue  # don't overwrite manual scores
+
+    # Among truly new scraped listings, resolve duplicates
     seen: dict[str, dict] = {}
     for l in new_listings:
         key = norm_addr(l["address"])
         if key in existing_by_addr:
-            # Already in existing — skip (don't overwrite manual scores)
             continue
         if key in seen:
-            # Keep whichever has more complete scores
             if _score_completeness(l["scores"]) > _score_completeness(seen[key]["scores"]):
                 seen[key] = l
         else:
