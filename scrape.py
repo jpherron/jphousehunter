@@ -31,7 +31,8 @@ from bs4 import BeautifulSoup
 GITHUB_REPO  = "jpherron/jphousehunter"
 GITHUB_FILE  = "data.json"
 DATA_URL     = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{GITHUB_FILE}"
-MAX_PRICE    = 950000
+MIN_PRICE    = 700_000
+MAX_PRICE    = 1_000_000
 REQUEST_DELAY = 4  # seconds between Redfin requests
 
 # Each entry: (zipcode, default_tier_key, display_name)
@@ -69,7 +70,7 @@ def fetch_search_page(zipcode: str, debug: bool = False) -> str | None:
     """Fetch a Redfin search results page for a zip code."""
     url = (
         f"https://www.redfin.com/zipcode/{zipcode}"
-        "/filter/property-type=house,max-price=950000,status=active"
+        f"/filter/property-type=house,min-price={MIN_PRICE},max-price={MAX_PRICE},status=active"
     )
     try:
         resp = requests.get(url, headers=HEADERS, timeout=20)
@@ -189,7 +190,7 @@ def normalize_json_home(raw: dict, zipcode: str, default_tier: str) -> dict | No
     if not price_raw:
         return None
     price_num = int(str(price_raw).replace(",", "").replace("$", "").strip())
-    if price_num > MAX_PRICE:
+    if price_num < MIN_PRICE or price_num > MAX_PRICE:
         return None
 
     # Optional fields
@@ -270,7 +271,7 @@ def _parse_card(card, zipcode: str, default_tier: str) -> dict | None:
         m = re.search(r'\$([\d,]+)', stats_text)
         if m:
             price_num = _to_int(m.group(1).replace(",", ""))
-    if not price_num or price_num > MAX_PRICE:
+    if not price_num or price_num < MIN_PRICE or price_num > MAX_PRICE:
         return None
 
     # Sqft
