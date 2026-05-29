@@ -535,14 +535,15 @@ def dedup_merge(new_listings: list[dict], existing: list[dict]) -> list[dict]:
 # ─── GITHUB ───────────────────────────────────────────────────────────────────
 
 def get_current_data() -> tuple[dict, str | None]:
-    """Fetch the current data.json from GitHub. Returns (data, sha)."""
+    """Fetch the current data.json from GitHub. Cache-bust to avoid stale CDN responses."""
+    import time as _time
+    url = f"{DATA_URL}?t={int(_time.time())}"
     try:
-        resp = requests.get(DATA_URL, timeout=10)
+        resp = requests.get(url, timeout=10)
         if resp.status_code == 200:
             return resp.json(), None
     except Exception:
         pass
-    # If fetch fails, fall back to empty structure
     return {"listings": [], "weights": {}}, None
 
 
