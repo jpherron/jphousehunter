@@ -21,6 +21,7 @@ import sys
 import os
 import hashlib
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 
@@ -68,7 +69,7 @@ def fetch_search_page(zipcode: str, debug: bool = False) -> str | None:
     """Fetch a Redfin search results page for a zip code."""
     url = (
         f"https://www.redfin.com/zipcode/{zipcode}"
-        "/filter/property-type=house,max-price=950000"
+        "/filter/property-type=house,max-price=950000,status=active"
     )
     try:
         resp = requests.get(url, headers=HEADERS, timeout=20)
@@ -388,14 +389,105 @@ def _auto_score(price_num: int, sqft: int | None, beds: int | None, year: int | 
         elif beds == 2: scores["beds"] = 1
         elif beds == 1: scores["beds"] = 3
 
-    # Historic age (0=pre-1930, 1=2016+, 2=1930-1959, 3=1960-2015)
-    if year:
-        if year < 1930:              scores["historic_age"] = 0
-        elif year >= 2016:           scores["historic_age"] = 1
-        elif year < 1960:            scores["historic_age"] = 2
-        else:                        scores["historic_age"] = 3
+    # Historic age — scored properly once year is known; left None until then
+    # (enrich_year_built() fills this in after fetching detail pages)
 
     return scores
+
+
+# ─── YEAR BUILT ENRICHMENT ───────────────────────────────────────────────────
+
+DETAIL_WORKERS = 8   # concurrent detail-page fetches
+DETAIL_DELAY   = 0.5 # seconds between requests per worker
+
+OFF_MARKET_SENTINEL = -1  # returned when detail page shows listing is no longer active
+
+OFF_MARKET_PHRASES = [
+    '"status":"Pending"', '"status":"Contingent"', '"status":"Sold"',
+    '"status":"Off Market"', '"status":"Canceled"',
+    '>Pending<', '>Contingent<', '>Under Contract<', '>Off Market<',
+    'listingStatus":"PENDING"', 'listingStatus":"CONTINGENT"',
+    'listingStatus":"SOLD"',
+]
+
+
+def fetch_year_built(url: str) -> int | None:
+    """
+    Fetch a Redfin property detail page, check it's still active,
+    and extract year built.
+    Returns OFF_MARKET_SENTINEL if the listing is no longer active.
+    Returns None if year can't be determined.
+    """
+    if not url or "redfin.com" not in url:
+        return None
+    try:
+        time.sleep(DETAIL_DELAY)
+        resp = requests.get(url, headers=HEADERS, timeout=15)
+        if resp.status_code != 200:
+            return None
+        html = resp.text
+        # Check if listing went off-market since we scraped it
+        if any(phrase in html for phrase in OFF_MARKET_PHRASES):
+            return OFF_MARKET_SENTINEL
+        # Fast path: yearBuilt in embedded JSON
+        m = re.search(r'"yearBuilt"\s*:\s*(\d{4})', html)
+        if m:
+            return int(m.group(1))
+        # Fallback: keyDetails section
+        m = re.search(r'(\d{4})\s*Year\s*Built', html)
+        if m:
+            return int(m.group(1))
+    except Exception:
+        pass
+    return None
+
+
+def enrich_year_built(listings: list[dict], debug: bool = False) -> None:
+    """
+    Fetch year built from detail pages for listings that don't have one.
+    Mutates listings in-place. Uses a thread pool for speed.
+    """
+    need = [l for l in listings if not l.get("year") and l.get("url")]
+    if not need:
+        return
+    print(f"\nFetching year built for {len(need)} listings ({DETAIL_WORKERS} parallel)...")
+
+    def fetch_one(listing):
+        year = fetch_year_built(listing["url"])
+        return listing["id"], year
+
+    found = 0
+    off_market_ids = set()
+    with ThreadPoolExecutor(max_workers=DETAIL_WORKERS) as pool:
+        futures = {pool.submit(fetch_one, l): l for l in need}
+        for future in as_completed(futures):
+            lid, year = future.result()
+            if year == OFF_MARKET_SENTINEL:
+                off_market_ids.add(lid)
+            elif year:
+                for l in listings:
+                    if l["id"] == lid:
+                        l["year"] = str(year)
+                        l["scores"]["historic_age"] = _age_score(year)
+                        found += 1
+                        if debug:
+                            print(f"  {l['address']}: {year}")
+                        break
+
+    if off_market_ids:
+        before = len(listings)
+        listings[:] = [l for l in listings if l["id"] not in off_market_ids]
+        print(f"  Removed {before - len(listings)} off-market listings detected on detail page")
+
+    print(f"  Got year built for {found}/{len(need)} listings")
+
+
+def _age_score(year: int) -> int:
+    """Return historic_age score index for a given year."""
+    if year < 1930:  return 0  # Full
+    if year >= 2016: return 1  # Good (new)
+    if year < 1960:  return 2  # Low (1930-1959)
+    return 3                   # None (1960-2015)
 
 
 # ─── DEDUP ────────────────────────────────────────────────────────────────────
@@ -550,6 +642,15 @@ def main():
         time.sleep(REQUEST_DELAY)
 
     print(f"\nScraped {len(all_new)} total new listings before dedup")
+
+    # Enrich new listings with year built from detail pages
+    # (only fetches for listings not already in existing data)
+    existing_addrs = {re.sub(r'\W+', ' ', l["address"]).lower().strip() for l in existing_listings}
+    truly_new = [
+        l for l in all_new
+        if re.sub(r'\W+', ' ', l["address"]).lower().strip() not in existing_addrs
+    ]
+    enrich_year_built(truly_new, debug=args.debug)
 
     # Merge with existing
     merged = dedup_merge(all_new, existing_listings)
