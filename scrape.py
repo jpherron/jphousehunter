@@ -403,7 +403,7 @@ DETAIL_DELAY   = 0.5 # seconds between requests per worker
 
 def fetch_year_built(url: str) -> int | None:
     """Fetch a Redfin property detail page and extract year built."""
-    if not url or "redfin.com" not in url:
+    if not url or "redfin.com" not in url or "zillow.com" in url:
         return None
     try:
         time.sleep(DETAIL_DELAY)
@@ -493,6 +493,8 @@ def dedup_merge(new_listings: list[dict], existing: list[dict]) -> list[dict]:
 
     scraped_addrs = {norm_addr(l["address"]) for l in new_listings}
 
+    # Drop ALL Zillow-URL listings — zpids get reused after a sale, making them
+    # silently point to wrong properties and impossible to verify automatically.
     # Drop Zillow-URL listings in scraped zips that Redfin no longer shows active
     surviving_existing = []
     dropped = 0
@@ -500,6 +502,7 @@ def dedup_merge(new_listings: list[dict], existing: list[dict]) -> list[dict]:
         is_zillow = "zillow.com" in l.get("url","")
         in_scraped_zip = listing_zip(l) in SCRAPED_ZIPS
         if is_zillow and in_scraped_zip and norm_addr(l["address"]) not in scraped_addrs:
+            # Also catches Zillow URLs outside scraped zips on any future run
             print(f"  Dropping stale Zillow listing (not in Redfin results): {l['address']}")
             dropped += 1
         else:
