@@ -198,32 +198,58 @@ const CRITERIA=[
 ];
 const DEFAULT_W={t_stop:8,portsmouth:7,walkable:8,restaurants:5,nature:5,price:9,sqft:6,type:7,bedrooms:7,ensuite:6,ceiling:6,storage:8,workshop:6,fenced:6,move_in:7,ac:5,sys_roof:5,sys_elec:5,sys_plumb:5,sys_siding:3,sys_windows:3,sys_hvac:5,pre1940:6,hoa:7,arch:7,light:7};
 
-// ── Supabase persistent storage ─────────────────────────────────────────
-const SB_URL='https://ovymgkyzwtobkiphpoed.supabase.co';
-const SB_KEY='sb_publishable_6YYiqctG59yOTGETh262jQ_FsxtjfTi';
-const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'resolution=merge-duplicates'};
+// ── GitHub Gist persistent storage ───────────────────────────────────────
+const GIST_ID='22bc628d7e6700e2fc9aea07d6f70ee5';
+const GIST_FILE='hev-data.json';
+
+function _gistToken(){return localStorage.getItem('hev_gist_token')||'';}
+
+let _gistCache=null;
+
+async function _gistLoad(){
+  if(_gistCache)return _gistCache;
+  try{
+    const r=await fetch('https://api.github.com/gists/'+GIST_ID,{headers:{'Accept':'application/vnd.github+json'}});
+    if(r.ok){
+      const g=await r.json();
+      const content=g.files&&g.files[GIST_FILE]&&g.files[GIST_FILE].content;
+      if(content){_gistCache=JSON.parse(content);return _gistCache;}
+    }
+  }catch(e){}
+  _gistCache={};
+  return _gistCache;
+}
+
+let _saveTimer=null;
 
 async function serverGet(key){
   try{
-    const controller=new AbortController();
-    const tid=setTimeout(()=>controller.abort(),4000);
-    const r=await fetch(SB_URL+'/rest/v1/hev_store?key=eq.'+encodeURIComponent(key)+'&select=value',{headers:SB_HEADERS,signal:controller.signal});
-    clearTimeout(tid);
-    if(r.ok){
-      const d=await r.json();
-      if(d&&d.length>0)return d[0].value;
-    }
+    const state=await _gistLoad();
+    if(key in state)return state[key];
   }catch(e){}
   try{return localStorage.getItem(key);}catch(e){return null;}
 }
 
 async function serverSet(key,val){
   try{
-    await fetch(SB_URL+'/rest/v1/hev_store',{
-      method:'POST',
-      headers:SB_HEADERS,
-      body:JSON.stringify({key,value:val,updated_at:new Date().toISOString()})
-    });
+    const state=await _gistLoad();
+    state[key]=val;
+    clearTimeout(_saveTimer);
+    _saveTimer=setTimeout(async()=>{
+      let token=_gistToken();
+      if(!token){
+        token=prompt('Paste your GitHub PAT (gist scope) to save settings — stored locally, never sent to server:');
+        if(token)localStorage.setItem('hev_gist_token',token.trim());
+        else return;
+      }
+      try{
+        await fetch('https://api.github.com/gists/'+GIST_ID,{
+          method:'PATCH',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'},
+          body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(_gistCache)}}})
+        });
+      }catch(e){}
+    },500);
   }catch(e){}
   try{localStorage.setItem(key,val);}catch(e){}
 }
