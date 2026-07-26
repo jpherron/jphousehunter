@@ -378,7 +378,7 @@ def normalize_zillow_home(raw: dict) -> dict | None:
     listing_id = _make_id(full_address)
     return {
         "id": listing_id,
-        "address": full_address,
+        "name": full_address,
         "price": f"${price_num:,}",
         "url": hdp_url,
         "year": str(year) if year else "",
@@ -469,12 +469,12 @@ def dedup_merge(new_listings: list[dict], existing: list[dict]) -> tuple[list[di
     def norm(a: str) -> str:
         return re.sub(r'\W+', ' ', a).lower().strip()
 
-    existing_by_addr = {norm(l["address"]): l for l in existing}
+    existing_by_addr = {norm(l.get("name") or l.get("address","")): l for l in existing}
     merged = list(existing)
     added = 0
 
     for l in new_listings:
-        key = norm(l["address"])
+        key = norm(l.get("name") or l.get("address",""))
         if key in existing_by_addr:
             ex = existing_by_addr[key]
             # Upgrade URL if existing has a stale Zillow zpid URL and new one differs
