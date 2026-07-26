@@ -51,6 +51,26 @@ GITHUB_REPO = "jpherron/jphousehunter"
 GITHUB_FILE = "data.json"
 DATA_URL    = f"https://raw.githubusercontent.com/{GITHUB_REPO}/main/{GITHUB_FILE}"
 
+GIST_ID   = "22bc628d7e6700e2fc9aea07d6f70ee5"
+GIST_FILE = "hev-data.json"
+
+
+def gist_get_cookies() -> str | None:
+    """Read Zillow cookies stored in the app's Gist settings."""
+    try:
+        r = requests.get(
+            f"https://api.github.com/gists/{GIST_ID}",
+            headers={"Accept": "application/vnd.github+json"},
+            timeout=10,
+        )
+        if r.status_code == 200:
+            content = r.json().get("files", {}).get(GIST_FILE, {}).get("content", "{}")
+            state = json.loads(content)
+            return state.get("hev_zillow_cookies") or None
+    except Exception:
+        pass
+    return None
+
 MIN_PRICE = 700_000
 MAX_PRICE = 1_100_000  # slightly wider net for Zillow import; filter in UI
 
@@ -545,7 +565,7 @@ def _make_id(address: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Fetch Zillow favorites and merge into data.json")
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--cookies", help="Raw cookie string from browser DevTools")
     group.add_argument("--cookies-file", help="Path to a file containing the cookie string")
     parser.add_argument("--dry-run", action="store_true", help="Print results without writing anywhere")
@@ -557,8 +577,15 @@ def main():
     if args.cookies_file:
         with open(args.cookies_file) as f:
             cookie_str = f.read().strip()
-    else:
+    elif args.cookies:
         cookie_str = args.cookies
+    else:
+        print("No --cookies provided — checking Gist for saved cookies...")
+        cookie_str = gist_get_cookies()
+        if not cookie_str:
+            print("Error: no cookies found. Paste your Zillow cookies in the app (Data → Settings) or pass --cookies.")
+            sys.exit(1)
+        print("  Found cookies in Gist.")
 
     if not args.sync_app and not args.dry_run:
         token = os.environ.get("GITHUB_TOKEN")

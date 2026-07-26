@@ -357,7 +357,7 @@ function showTab(t){
   if(t==='weights')renderWeights();
   if(t==='insights')renderInsights();
   if(t==='location')renderLocation();
-  if(t==='data')renderData();
+  if(t==='data'){renderData();populateSettings();}
 }
 
 
@@ -933,7 +933,41 @@ function renderData(){
         <label class="btn btn-sm" style="cursor:pointer">Load from file<input type="file" accept=".json" onchange="importDataFile(this)" style="display:none"></label>
       </div>
       <div id="data-status" style="font-size:13px;margin-top:8px;min-height:18px;color:#888"></div>
+    </div>
+    <div class="import-box" style="margin-top:12px">
+      <h3>Settings</h3>
+      <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">GitHub PAT</div>
+      <p>Token with <code>gist</code> scope — used to save scores and settings.</p>
+      <input type="password" id="settings-gist-token" placeholder="ghp_…" style="width:100%;font-size:13px;border:1px solid #eee;border-radius:8px;padding:8px 10px;background:#fff;font-family:monospace;box-sizing:border-box">
+      <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:16px;margin-bottom:6px">Zillow cookies</div>
+      <p>Paste your Zillow browser cookies here once. Saved locally and synced to your Gist so the scraper can pick them up automatically.</p>
+      <textarea id="settings-zillow-cookies" class="json-input" rows="3" placeholder="Paste cookie header value from DevTools…" style="font-size:11px"></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save settings</button>
+        <div id="settings-status" style="font-size:13px;min-height:20px;color:#888"></div>
+      </div>
     </div>`;
+}
+
+async function saveSettings(){
+  const tok=(document.getElementById('settings-gist-token').value||'').trim();
+  const cookies=(document.getElementById('settings-zillow-cookies').value||'').trim();
+  const st=document.getElementById('settings-status');
+  st.textContent='Saving…';st.style.color='#888';
+  if(tok)localStorage.setItem('hev_gist_token',tok);
+  if(cookies)await serverSet('hev_zillow_cookies',cookies);
+  st.textContent='Saved.';st.style.color='#27500A';
+  setTimeout(()=>{st.textContent='';},2500);
+}
+
+async function populateSettings(){
+  const tokEl=document.getElementById('settings-gist-token');
+  const cookEl=document.getElementById('settings-zillow-cookies');
+  if(tokEl)tokEl.value=localStorage.getItem('hev_gist_token')||'';
+  if(cookEl){
+    const c=await serverGet('hev_zillow_cookies');
+    cookEl.value=c||'';
+  }
 }
 
 function clearAllListings(){
