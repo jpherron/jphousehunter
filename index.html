@@ -939,9 +939,14 @@ function renderData(){
       <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">GitHub PAT</div>
       <p>Token with <code>gist</code> scope — used to save scores and settings.</p>
       <input type="password" id="settings-gist-token" placeholder="ghp_…" style="width:100%;font-size:13px;border:1px solid #eee;border-radius:8px;padding:8px 10px;background:#fff;font-family:monospace;box-sizing:border-box">
-      <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:16px;margin-bottom:6px">Zillow cookies</div>
-      <p>Paste your Zillow browser cookies here once. Saved locally and synced to your Gist so the scraper can pick them up automatically.</p>
-      <textarea id="settings-zillow-cookies" class="json-input" rows="3" placeholder="Paste cookie header value from DevTools…" style="font-size:11px"></textarea>
+      <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:16px;margin-bottom:6px">Zillow session</div>
+      <p>The scraper opens a browser window automatically to grab your Zillow session. Run once — your login is remembered for next time.</p>
+      <div style="background:#fff;border:1px solid #eee;border-radius:8px;padding:10px 12px;font-size:12px;font-family:monospace;color:#444;margin-bottom:10px;word-break:break-all">GIST_TOKEN=ghp_… python3 fetch_zillow_favorites.py</div>
+      <p style="margin-bottom:10px">Set <code>GIST_TOKEN</code> once so the script saves the session back to your Gist automatically.</p>
+      <details style="margin-bottom:10px">
+        <summary style="font-size:13px;color:#888;cursor:pointer">Paste cookies manually instead</summary>
+        <textarea id="settings-zillow-cookies" class="json-input" rows="3" placeholder="Paste cookie header value from DevTools…" style="font-size:11px;margin-top:8px"></textarea>
+      </details>
       <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
         <button class="btn btn-primary btn-sm" onclick="saveSettings()">Save settings</button>
         <div id="settings-status" style="font-size:13px;min-height:20px;color:#888"></div>

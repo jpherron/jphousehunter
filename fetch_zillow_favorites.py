@@ -55,6 +55,9 @@ GIST_ID   = "22bc628d7e6700e2fc9aea07d6f70ee5"
 GIST_FILE = "hev-data.json"
 
 
+BROWSER_PROFILE = os.path.expanduser("~/.jphousehunter_browser")
+
+
 def gist_get_cookies() -> str | None:
     """Read Zillow cookies stored in the app's Gist settings."""
     try:
@@ -70,6 +73,68 @@ def gist_get_cookies() -> str | None:
     except Exception:
         pass
     return None
+
+
+def gist_set_cookies(cookie_str: str, token: str) -> bool:
+    """Write Zillow cookies back to the app's Gist."""
+    try:
+        r = requests.get(
+            f"https://api.github.com/gists/{GIST_ID}",
+            headers={"Accept": "application/vnd.github+json"},
+            timeout=10,
+        )
+        state = {}
+        if r.status_code == 200:
+            content = r.json().get("files", {}).get(GIST_FILE, {}).get("content", "{}")
+            state = json.loads(content)
+        state["hev_zillow_cookies"] = cookie_str
+        r2 = requests.patch(
+            f"https://api.github.com/gists/{GIST_ID}",
+            json={"files": {GIST_FILE: {"content": json.dumps(state)}}},
+            headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json"},
+            timeout=15,
+        )
+        return r2.status_code == 200
+    except Exception:
+        return False
+
+
+def browser_get_cookies() -> str:
+    """
+    Launch a persistent Chromium window to zillow.com/myzillow/favorites
+    and extract cookies. Saves the browser profile so login persists across runs.
+    """
+    try:
+        from playwright.sync_api import sync_playwright
+    except ModuleNotFoundError:
+        print("playwright not installed — installing now...")
+        import subprocess
+        subprocess.run(
+            ["pip3", "install", "playwright", "--break-system-packages", "-q"],
+            check=True,
+        )
+        subprocess.run(
+            ["python3", "-m", "playwright", "install", "chromium", "--quiet"],
+            check=True,
+        )
+        from playwright.sync_api import sync_playwright
+
+    print("  Opening browser — log in to Zillow if prompted, then wait for your favorites to load...")
+    with sync_playwright() as p:
+        ctx = p.chromium.launch_persistent_context(
+            BROWSER_PROFILE,
+            headless=False,
+            args=["--disable-blink-features=AutomationControlled"],
+            ignore_default_args=["--enable-automation"],
+        )
+        page = ctx.pages[0] if ctx.pages else ctx.new_page()
+        page.goto("https://www.zillow.com/myzillow/favorites")
+        page.wait_for_url("*zillow.com/myzillow/favorites*", timeout=120_000)
+        page.wait_for_load_state("networkidle", timeout=30_000)
+        cookies = ctx.cookies(["https://www.zillow.com"])
+        ctx.close()
+
+    return "; ".join(f"{c['name']}={c['value']}" for c in cookies)
 
 MIN_PRICE = 700_000
 MAX_PRICE = 1_100_000  # slightly wider net for Zillow import; filter in UI
@@ -583,9 +648,18 @@ def main():
         print("No --cookies provided — checking Gist for saved cookies...")
         cookie_str = gist_get_cookies()
         if not cookie_str:
-            print("Error: no cookies found. Paste your Zillow cookies in the app (Data → Settings) or pass --cookies.")
-            sys.exit(1)
-        print("  Found cookies in Gist.")
+            print("  None found — launching browser to grab them automatically...")
+            cookie_str = browser_get_cookies()
+            gist_token = os.environ.get("GIST_TOKEN")
+            if gist_token:
+                if gist_set_cookies(cookie_str, gist_token):
+                    print("  Cookies saved to Gist for next time.")
+                else:
+                    print("  Warning: couldn't save cookies to Gist (check GIST_TOKEN).")
+            else:
+                print("  Tip: set GIST_TOKEN env var to auto-save cookies to your Gist.")
+        else:
+            print("  Found cookies in Gist.")
 
     if not args.sync_app and not args.dry_run:
         token = os.environ.get("GITHUB_TOKEN")
