@@ -121,11 +121,9 @@ def browser_get_cookies() -> str:
 
     print("  Opening browser — log in to Zillow if prompted, then wait for your favorites to load...")
     with sync_playwright() as p:
-        ctx = p.chromium.launch_persistent_context(
+        ctx = p.firefox.launch_persistent_context(
             BROWSER_PROFILE,
             headless=False,
-            args=["--disable-blink-features=AutomationControlled"],
-            ignore_default_args=["--enable-automation"],
         )
         page = ctx.pages[0] if ctx.pages else ctx.new_page()
         page.goto("https://www.zillow.com/myzillow/favorites")
