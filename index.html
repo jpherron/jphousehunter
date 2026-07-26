@@ -297,13 +297,14 @@ async function loadAllState(){
   const lwRaw=g('hev_locweight');
 
   if(wRaw){try{const p=JSON.parse(wRaw);Object.keys(p).forEach(k=>{if(k in weights)weights[k]=+p[k];});}catch(e){}}
-  if(lRaw){try{listings=JSON.parse(lRaw);}catch(e){}}
+  if(lRaw){try{listings=JSON.parse(lRaw).map(l=>{if(!l.name&&l.address){l.name=l.address;delete l.address;}return l;});}catch(e){}}
   if(ljRaw){lastImportJson=ljRaw;}
   if(lpRaw){try{locPrefs=JSON.parse(lpRaw);}catch(e){}}
   if(lwRaw){locWeight=+lwRaw;}
 }
 
 function extractTown(name){
+  if(!name)return null;
   const m=name.match(/,\s*([^,]+?)\s+MA\s*$/i);
   if(!m)return null;
   return m[1].trim();
