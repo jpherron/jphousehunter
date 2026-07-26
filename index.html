@@ -1262,7 +1262,17 @@ function goEdit(idx){
   showTab('listings');
   setTimeout(()=>{const el=document.getElementById('lc-'+idx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100);
 }
-loadAllState().then(()=>{
+loadAllState().then(async()=>{
+  if(!listings.length){
+    try{
+      const r=await fetch('https://raw.githubusercontent.com/jpherron/jphousehunter/main/data.json');
+      if(r.ok){
+        const d=await r.json();
+        listings=Array.isArray(d)?d:(d.listings||[]);
+        saveListings();
+      }
+    }catch(e){}
+  }
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('app-root').style.display='';
   renderTabs();
