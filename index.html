@@ -2,840 +2,1207 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>House Evaluator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>House listing evaluator</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh}
-.app{max-width:900px;margin:0 auto;padding:24px 20px}
-h1{font-size:22px;font-weight:600;margin-bottom:4px}
-.subtitle{font-size:13px;color:#666;margin-bottom:24px}
-
-/* Tabs */
-.tabs{display:flex;gap:0;border-bottom:1px solid #ddd;margin-bottom:24px}
-.tab{padding:8px 18px;border:none;background:none;font-size:13px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
-.tab.active{color:#2563eb;border-bottom-color:#2563eb}
-.tab:hover:not(.active){color:#333}
-.panel{display:none}.panel.active{display:block}
-
-/* Criteria */
-.section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#888;margin:20px 0 10px}
-.crit-row{padding:10px 0;border-bottom:1px solid #eee}
+body{font-family:system-ui,sans-serif;background:#fff;color:#1a1a1a;font-size:15px;-webkit-text-size-adjust:100%}
+.app{max-width:700px;margin:0 auto}
+.tabs{display:flex;border-bottom:1px solid #e0e0e0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;background:#fff;position:sticky;top:0;z-index:10}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font-size:13px;padding:12px 16px;border:none;background:none;cursor:pointer;color:#888;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.tab.active{color:#000;border-bottom-color:#000;font-weight:500}
+.page{padding:16px}
+.section{margin-bottom:1.5rem}
+.section-title{font-size:11px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.crit-row{padding:10px 0;border-bottom:1px solid #f0f0f0}
 .crit-row:last-child{border-bottom:none}
-.crit-top{display:grid;grid-template-columns:1fr 50px 140px;align-items:center;gap:12px}
-.crit-name{font-size:13px;font-weight:500}
-.crit-wval{font-size:12px;color:#888;text-align:right}
-input[type=range]{width:100%;accent-color:#2563eb}
-.tiers{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-.tier{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid #e0e0e0;color:#555;line-height:1.4;cursor:pointer;transition:all .15s}
-.tier:hover{border-color:#2563eb;color:#2563eb}
-.tier.selected{border-color:#2563eb;background:#eff6ff;color:#2563eb}
-.tier span{font-weight:600;display:block;font-size:10px;margin-bottom:1px}
-.tier.full span{color:#16a34a}.tier.partial span{color:#d97706}.tier.low span{color:#dc2626}
+.crit-name{font-size:14px;font-weight:500;margin-bottom:6px}
+.weight-row{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.weight-row input[type=range]{flex:1;height:36px;cursor:pointer}
+.crit-wval{font-size:13px;color:#888;min-width:20px;text-align:right}
+.tiers{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.tiers.one-col{grid-template-columns:1fr}
+.tier{font-size:11px;padding:5px 8px;border-radius:6px;border:1px solid #eee;color:#666;line-height:1.4}
+.tier span{font-weight:500;display:block;margin-bottom:1px}
+.tier-b span{color:#BA7517}
+.tier-c span{color:#c0392b}
+.arch-tiers{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:4px}
+.arch-tier{font-size:10px;padding:4px 5px;border-radius:6px;border:1px solid #eee;color:#666;line-height:1.3;text-align:center}
+.arch-tier span{font-weight:500;display:block;margin-bottom:2px}
+.btn{font-size:14px;padding:10px 16px;border:1px solid #ccc;border-radius:10px;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn:active{background:#f0f0f0}
+.btn-primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-primary:active{opacity:.8}
+.btn-sm{font-size:13px;padding:7px 12px}
+.card{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.name-input{font-size:16px;font-weight:500;border:none;background:none;color:#1a1a1a;width:100%;outline:none;margin-bottom:4px}
+.name-input::placeholder{color:#bbb}
+.url-input{font-size:13px;border:none;background:none;color:#2563eb;flex:1;outline:none;min-width:0}
+.url-input::placeholder{color:#bbb}
+.score-badge{font-size:13px;font-weight:500;padding:4px 10px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+.s-hi{background:#EAF3DE;color:#27500A}
+.s-md{background:#FAEEDA;color:#633806}
+.s-lo{background:#FCEBEB;color:#791F1F}
+.s-na{background:#f5f5f5;color:#888}
+.del-btn{font-size:12px;color:#c0392b;background:none;border:none;cursor:pointer;padding:4px 8px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.crit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:6px}
+.crit-cell{border:1px solid #eee;border-radius:10px;padding:9px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent;min-width:0;background:#fff;width:100%;text-align:left;font-family:inherit;font-size:inherit;display:block}
+.crit-cell:active{background:#f5f5f5}
+.crit-cell:hover{background:#f9f9f9}
+.cell-top{display:flex;align-items:center;gap:7px}
+.dot{width:16px;height:16px;border-radius:4px;border:1px solid #ccc;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px}
+.dot-a{background:#EAF3DE;border-color:#97C459;color:#27500A}
+.dot-b{background:#FAEEDA;border-color:#FAC775;color:#BA7517}
+.dot-c{background:#FCEBEB;border-color:#F09595;color:#791F1F}
+.dot-d{background:#2d0a0a;border-color:#6b1a1a;color:#fff}
+.t-d{color:#791F1F;font-weight:500}
+.cell-label{font-size:13px;color:#1a1a1a;line-height:1.3}
+.cell-tier{font-size:11px;color:#aaa;margin-top:4px;margin-left:23px;line-height:1.3}
+.cell-tier.t-a{color:#27500A}
+.cell-tier.t-b{color:#BA7517}
+.cell-tier.t-c{color:#791F1F}
+.arch-cell{border:1px solid #eee;border-radius:10px;padding:10px;min-width:0}
+.arch-label{font-size:13px;font-weight:500;margin-bottom:8px}
+.arch-stars{display:flex;gap:6px;flex-wrap:wrap}
+.star-btn{width:36px;height:36px;border:1px solid #eee;border-radius:8px;background:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.star-btn:active{background:#f5f5f5}
+.star-btn.filled{background:#FAEEDA;border-color:#FAC775}
+.arch-desc{font-size:11px;color:#888;margin-top:6px;line-height:1.3;min-height:16px}
+.subsection-label{font-size:11px;color:#888;font-weight:500;margin:12px 0 6px;padding-top:8px;border-top:1px solid #f0f0f0}
+.subsection-label:first-child{border-top:none;margin-top:0;padding-top:0}
+.notes-input{width:100%;font-size:13px;border:1px solid #eee;border-radius:10px;padding:8px 10px;color:#1a1a1a;background:#f9f9f9;margin-top:10px;resize:none;font-family:inherit;line-height:1.5}
+.notes-input:focus{outline:none;border-color:#aaa}
+.divider{border:none;border-top:1px solid #f0f0f0;margin:12px 0}
+.empty{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+.lcard{background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.lcard:active{background:#fafafa}
+.lcard.active{border-color:#1a1a1a;border-width:1.5px}
+.rank-num{font-size:24px;font-weight:500;color:#ccc;width:36px;flex-shrink:0;text-align:center}
+.rank-num.top{color:#1a1a1a}
+.bar-bg{background:#f0f0f0;border-radius:99px;height:6px;overflow:hidden;flex:1}
+.bar-fill{height:6px;border-radius:99px}
+.criteria-mini{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:5px;margin-top:12px}
+.mini-item{display:flex;align-items:center;gap:5px;font-size:12px;color:#888}
+.mini-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.import-box{background:#f9f9f9;border:1px solid #eee;border-radius:14px;padding:16px;margin-bottom:1.5rem}
+.import-box h3{font-size:14px;font-weight:500;margin-bottom:6px}
+.import-box p{font-size:13px;color:#666;margin-bottom:10px;line-height:1.5}
+.json-input{width:100%;font-size:12px;font-family:monospace;border:1px solid #eee;border-radius:8px;padding:10px;color:#1a1a1a;background:#fff;resize:vertical;line-height:1.4}
+.json-input:focus{outline:none;border-color:#aaa}
+.import-status{font-size:13px;margin-top:8px;min-height:20px}
+.import-status.ok{color:#27500A}
+.import-status.err{color:#c0392b}
+#upload-zone:active{background:#f5f5f5}
+.json-panel{background:#f9f9f9;border:1px solid #eee;border-radius:14px;margin-bottom:1.5rem;overflow:hidden}
+.json-panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.json-panel-header:active{background:#f0f0f0}
+.json-panel-title{font-size:13px;font-weight:500;color:#1a1a1a}
+.json-panel-meta{font-size:11px;color:#aaa}
+.json-panel-body{padding:0 16px 14px;display:none}
+.json-panel-body.open{display:block}
+.json-copy-btn{font-size:12px;padding:5px 12px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;margin-top:8px;-webkit-tap-highlight-color:transparent}
+.json-copy-btn:active{background:#f0f0f0}
+.json-display{font-size:10px;font-family:monospace;background:#fff;border:1px solid #eee;border-radius:8px;padding:8px;max-height:160px;overflow-y:auto;word-break:break-all;color:#444;margin-top:8px;line-height:1.4;white-space:pre-wrap}
+.mx-wrap{width:100%;padding-bottom:8px}
+.mx-table{border-collapse:collapse;font-family:inherit;width:100%;table-layout:fixed}
+.mx-corner{padding:8px;font-size:11px;font-weight:500;color:#888;border-bottom:1px solid #e0e0e0;text-align:right;vertical-align:bottom;overflow:hidden}
+.mx-listing-th{padding:6px 4px;font-size:11px;font-weight:500;text-align:center;border-bottom:1px solid #e0e0e0;border-left:1px solid #e0e0e0;line-height:1.3;vertical-align:bottom;overflow:hidden}
+.mx-group-row td{font-size:10px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.06em;padding:8px 8px 3px;border-bottom:1px solid #e0e0e0;background:#f9f9f9}
+.mx-factor{font-size:11px;color:#666;padding:0 8px;text-align:right;border-bottom:1px solid #f5f5f5;white-space:nowrap;height:30px;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+.mx-wt{font-size:10px;color:#bbb;margin-left:3px}
+.mx-cell{text-align:center;font-size:12px;font-weight:500;border-left:1px solid #f0f0f0;border-bottom:1px solid #f5f5f5;height:30px;vertical-align:middle;padding:2px 4px;overflow:hidden}
+.mx-total-label{font-size:13px;font-weight:500;color:#1a1a1a;padding:10px 8px;text-align:right;border-top:2px solid #bbb;border-bottom:1px solid #e0e0e0;overflow:hidden}
+.mx-total-cell{text-align:center;font-size:14px;font-weight:500;border-left:1px solid #e0e0e0;border-top:2px solid #bbb;border-bottom:1px solid #e0e0e0;height:38px;vertical-align:middle;overflow:hidden}
+.mx-subrow-label{font-size:10px;color:#bbb;padding:3px 8px;text-align:right;border-bottom:1px solid #f0f0f0;overflow:hidden}
+.mx-subrow-cell{text-align:center;font-size:10px;color:#bbb;background:#f9f9f9;border-left:1px solid #f0f0f0;border-bottom:1px solid #f0f0f0;height:22px;vertical-align:middle;overflow:hidden}
+.legend{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#666}
+.legend-swatch{width:12px;height:12px;border-radius:2px;flex-shrink:0;border:1px solid rgba(0,0,0,.08)}
 
-/* Stars */
-.stars{display:flex;gap:4px;margin-top:6px}
-.star{font-size:20px;cursor:pointer;color:#ddd;transition:color .1s;line-height:1}
-.star.on{color:#f59e0b}
-
-/* Score panel */
-.score-card{background:#fff;border-radius:10px;padding:18px;margin-bottom:16px;border:1px solid #e5e7eb;box-shadow:0 1px 3px rgba(0,0,0,.06)}
-.score-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
-.score-address{font-size:15px;font-weight:600}
-.score-price{font-size:13px;color:#555;margin-top:2px}
-.score-badge{min-width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;flex-shrink:0}
-.score-badge.great{background:#dcfce7;color:#16a34a}
-.score-badge.good{background:#fef9c3;color:#ca8a04}
-.score-badge.ok{background:#ffedd5;color:#c2410c}
-.score-badge.poor{background:#fee2e2;color:#dc2626}
-.score-breakdown{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px}
-.score-item{font-size:12px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #f3f4f6}
-.score-item:last-child{border-bottom:none}
-.score-item .val{font-weight:600}
-.score-item .val.full{color:#16a34a}.score-item .val.partial{color:#d97706}.score-item .val.low{color:#dc2626}.score-item .val.none{color:#9ca3af}
-
-/* Neighborhood tier badge */
-.nbhd-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;margin-top:6px}
-.nbhd-badge.tier1{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
-.nbhd-badge.tier2{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.nbhd-badge.other{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
-.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:6px}
-.status-badge.pending{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.status-badge.under_contract{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
-.nbhd-bar-wrap{margin-top:8px}
-.nbhd-bar-label{font-size:11px;color:#888;margin-bottom:3px;display:flex;justify-content:space-between}
-.nbhd-bar-track{height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}
-.nbhd-bar-fill{height:100%;border-radius:2px;transition:width .5s ease}
-
-/* Listing dashboard */
-.listings-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
-.btn{padding:7px 14px;border-radius:6px;border:none;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
-.btn-primary{background:#2563eb;color:#fff}.btn-primary:hover{background:#1d4ed8}
-.btn-secondary{background:#fff;color:#374151;border:1px solid #d1d5db}.btn-secondary:hover{background:#f9fafb}
-.btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}.btn-danger:hover{background:#fecaca}
-.listing-card{background:#fff;border-radius:10px;border:1px solid #e5e7eb;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .15s}
-.listing-card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.listing-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
-.listing-rank{font-size:13px;font-weight:700;color:#9ca3af;min-width:24px}
-.listing-info{flex:1;min-width:0}
-.listing-address{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.listing-meta{font-size:12px;color:#6b7280;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.listing-score{font-size:18px;font-weight:700;min-width:40px;text-align:right}
-.listing-score.great{color:#16a34a}.listing-score.good{color:#ca8a04}.listing-score.ok{color:#c2410c}.listing-score.poor{color:#dc2626}
-.listing-actions{display:flex;gap:6px;padding:0 16px 14px;border-top:1px solid #f3f4f6;margin-top:8px}
-.listing-expanded{padding:0 16px 14px;border-top:1px solid #f3f4f6}
-.listing-expanded.hidden{display:none}
-
-/* Add listing form */
-.form-section{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:20px;margin-bottom:20px}
-.form-title{font-size:15px;font-weight:600;margin-bottom:16px}
-.form-row{margin-bottom:12px}
-.form-row label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px}
-.form-row input,.form-row textarea{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit}
-.form-row textarea{min-height:100px;resize:vertical}
-.form-row input:focus,.form-row textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.1)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.ai-status{font-size:12px;color:#2563eb;margin-top:8px;display:none}
-
-/* Neighborhood selector */
-.nbhd-selector{margin-bottom:12px}
-.nbhd-selector label{display:block;font-size:12px;font-weight:500;color:#374151;margin-bottom:4px}
-.nbhd-selector select{width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;background:#fff}
-.nbhd-selector select:focus{outline:none;border-color:#2563eb}
-
-/* Data tab */
-.data-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.data-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb}
-.data-table th{background:#f9fafb;padding:8px 12px;text-align:left;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb}
-.data-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;color:#555}
-.data-table tr:last-child td{border-bottom:none}
-.data-table tr:hover td{background:#f9fafb}
-
-/* Empty state */
-.empty{text-align:center;padding:48px 20px;color:#9ca3af}
-.empty p{font-size:14px;margin-top:8px}
-
-/* Neighborhood info box */
-.nbhd-info{background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#78350f;line-height:1.6}
-.nbhd-info strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;color:#92400e}
-.nbhd-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.nbhd-group strong{font-weight:600;color:#555;display:block;margin-bottom:2px}
+#map-container{height:calc(100vh - 45px);width:100%;position:relative}
+#map{height:100%;width:100%}
+#map-panel{position:absolute;bottom:0;left:0;right:0;z-index:1000;max-height:50vh;overflow-y:auto;background:#fff;border-top:1px solid #e0e0e0;border-radius:14px 14px 0 0;padding:0;transform:translateY(100%);transition:transform .3s ease}
+#map-panel.open{transform:translateY(0)}
+#map-panel-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:10px auto 0}
+#map-panel-content{padding:16px}
+.map-pin{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;border:2.5px solid #fff;font-size:11px;font-weight:600;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
+.map-list{display:flex;flex-direction:column;gap:8px;padding-bottom:8px}
+.map-list-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #eee;border-radius:10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.map-list-item:active{background:#f5f5f5}
+.map-list-item.selected{border-color:#1a1a1a;border-width:1.5px}
+.map-pin-sm{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff;flex-shrink:0}
+.loc-card{background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+.loc-name{font-size:14px;font-weight:500;flex:1;min-width:0}
+.loc-sub{font-size:11px;color:#aaa;margin-top:1px}
+.loc-stars{display:flex;gap:5px;flex-shrink:0}
+.loc-star{width:32px;height:32px;border:1px solid #eee;border-radius:8px;background:none;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.loc-star:active{background:#f5f5f5}
+.loc-star.filled{background:#FAEEDA;border-color:#FAC775}
+.loc-badge{font-size:11px;font-weight:500;padding:3px 8px;border-radius:6px;background:#f5f5f5;color:#888;flex-shrink:0;white-space:nowrap}
+.loc-weight-row{display:flex;align-items:center;gap:10px;padding:14px 0 4px;border-top:1px solid #f0f0f0;margin-top:4px}
+.tab-dot{display:inline-block;width:7px;height:7px;background:#E24B4A;border-radius:50%;margin-left:5px;vertical-align:middle;flex-shrink:0}
+.needs-input{position:relative}
+.needs-input::after{content:'';position:absolute;top:6px;right:6px;width:7px;height:7px;background:#E24B4A;border-radius:50%;pointer-events:none}
+.gut-missing{border-color:#E24B4A!important;box-shadow:0 0 0 1px #E24B4A22}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
-<div class="app">
-  <h1>House Evaluator</h1>
-  <p class="subtitle">Score listings against your priorities. Neighborhood tier fit baked in.</p>
+<div id="loading-screen" style="display:flex;align-items:center;justify-content:center;height:100vh;font-size:14px;color:#aaa;font-family:system-ui,sans-serif">Loading your data…</div>
+<div class="app" id="app-root" style="display:none">
+<div class="tabs" id="main-tabs"></div>
+<div class="page" id="tab-listings"></div>
+<div id="tab-map" style="display:none"></div>
+<div class="page" id="tab-weights" style="display:none"></div>
+<div class="page" id="tab-insights" style="display:none"></div>
+<div class="page" id="tab-location" style="display:none"></div>
+<div class="page" id="tab-data" style="display:none"></div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="showPanel('criteria')">Criteria & Weights</button>
-    <button class="tab" onclick="showPanel('listings')">Listings</button>
-    <button class="tab" onclick="showPanel('add')">Add Listing</button>
-    <button class="tab" onclick="showPanel('data')">Data</button>
-  </div>
-
-  <!-- CRITERIA PANEL -->
-  <div id="panel-criteria" class="panel active">
-    <p style="font-size:13px;color:#666;margin-bottom:16px">Adjust weights (1–10) for each criterion. Click a tier button to see what it means — these will be used when scoring listings.</p>
-
-    <div class="section-title">Basics</div>
-    <div id="crit-basics"></div>
-
-    <div class="section-title">Space</div>
-    <div id="crit-space"></div>
-
-    <div class="section-title">Systems & Condition</div>
-    <div id="crit-systems"></div>
-
-    <div class="section-title">Character</div>
-    <div id="crit-character"></div>
-
-    <div class="section-title">Extras</div>
-    <div id="crit-extras"></div>
-
-    <div class="section-title">Neighborhood Tier</div>
-    <div class="nbhd-info">
-      <strong>Your pre-researched neighborhood ranking — applied automatically to every score</strong>
-      <div class="nbhd-grid">
-        <div class="nbhd-group">
-          <strong style="color:#15803d">Tier 1 — Woven into Boston</strong>
-          Roslindale (Tappan/Walter/Met. Hill) · West Roxbury (Centre St/Bellevue Hill/Millennium Park edge) · Hyde Park Fairmount Hill only
-        </div>
-        <div class="nbhd-group">
-          <strong style="color:#92400e">Tier 2 — Town identity, S/W of Boston</strong>
-          Dedham Square · Natick Center · Norwood Center · Walpole Center · Plymouth Historic Downtown
-        </div>
-      </div>
-    </div>
-    <div class="crit-row">
-      <div class="crit-top">
-        <span class="crit-name">Neighborhood Tier Weight</span>
-        <span class="crit-wval" id="wval-neighborhood_tier">7</span>
-        <input type="range" min="1" max="10" value="7" oninput="updateWeight('neighborhood_tier',this.value)">
-      </div>
-      <div style="font-size:12px;color:#888;margin-top:6px">Higher weight = neighborhood placement has more influence on the final score. Tier 1 match = full points, Tier 2 = partial, outside tiers = none.</div>
-    </div>
-  </div>
-
-  <!-- LISTINGS PANEL -->
-  <div id="panel-listings" class="panel">
-    <div class="listings-header">
-      <div style="font-size:13px;color:#666"><span id="listing-count">0</span> listings</div>
-      <button class="btn btn-secondary" onclick="showPanel('add')">+ Add Listing</button>
-    </div>
-    <div id="listings-list"><div class="empty"><div style="font-size:32px">🏠</div><p>No listings yet. Add one to get started.</p></div></div>
-  </div>
-
-  <!-- ADD LISTING PANEL -->
-  <div id="panel-add" class="panel">
-    <div class="form-section">
-      <div class="form-title">Add New Listing</div>
-      <div class="form-grid">
-        <div class="form-row">
-          <label>Address</label>
-          <input type="text" id="f-address" placeholder="123 Main St, Roslindale, MA">
-        </div>
-        <div class="form-row">
-          <label>Price</label>
-          <input type="text" id="f-price" placeholder="$749,000">
-        </div>
-        <div class="form-row">
-          <label>Listing URL</label>
-          <input type="text" id="f-url" placeholder="https://redfin.com/...">
-        </div>
-        <div class="form-row">
-          <label>Year Built</label>
-          <input type="text" id="f-year" placeholder="1925">
-        </div>
-      </div>
-
-      <div class="nbhd-selector">
-        <label>Neighborhood Tier</label>
-        <select id="f-nbhd-tier">
-          <option value="other">— Outside target areas —</option>
-          <optgroup label="Tier 1 — Woven into Boston">
-            <option value="tier1-rozzie-tappan">Roslindale — Tappan/Walter/Arboretum edge</option>
-            <option value="tier1-rozzie-village">Roslindale — Metropolitan Hill / Adams Park village</option>
-            <option value="tier1-wr-centre">West Roxbury — Centre St village + Corey St</option>
-            <option value="tier1-wr-bellevue">West Roxbury — Bellevue Hill</option>
-            <option value="tier1-wr-millennium">West Roxbury — Millennium Park edge</option>
-            <option value="tier1-hp-fairmount">Hyde Park — Fairmount Hill only</option>
-          </optgroup>
-          <optgroup label="Tier 2 — Town identity, S/W of Boston">
-            <option value="tier2-dedham">Dedham Square — near Endicott station</option>
-            <option value="tier2-natick">Natick Center — village core near station</option>
-            <option value="tier2-norwood">Norwood Center — near Norwood Central station</option>
-            <option value="tier2-walpole">Walpole Center — near Union Station</option>
-            <option value="tier2-plymouth">Plymouth Historic Downtown — waterfront district</option>
-          </optgroup>
-          <optgroup label="Other areas">
-            <option value="other-rozzie">Roslindale (outside target streets)</option>
-            <option value="other-wr">West Roxbury (outside target streets)</option>
-            <option value="other-hp">Hyde Park (outside Fairmount Hill)</option>
-            <option value="other-jp">Jamaica Plain</option>
-            <option value="other-metro">Other MetroWest / South Shore / other</option>
-          </optgroup>
-        </select>
-      </div>
-
-      <div class="form-row">
-        <label>Paste listing description (for AI scoring)</label>
-        <textarea id="f-description" placeholder="Paste the full listing text from Zillow or Redfin here. The AI will extract scores for all criteria automatically."></textarea>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-primary" onclick="scoreWithAI()">Score with AI</button>
-        <button class="btn btn-secondary" onclick="addManually()">Add &amp; Score Manually</button>
-      </div>
-      <div class="ai-status" id="ai-status">Analyzing listing…</div>
-    </div>
-
-    <!-- Manual scoring form (hidden until needed) -->
-    <div id="manual-form" style="display:none">
-      <div class="form-section">
-        <div class="form-title">Score Manually</div>
-        <div id="manual-criteria"></div>
-        <div style="margin-top:16px;display:flex;gap:8px">
-          <button class="btn btn-primary" onclick="saveManual()">Save Listing</button>
-          <button class="btn btn-secondary" onclick="document.getElementById('manual-form').style.display='none'">Cancel</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DATA PANEL -->
-  <div id="panel-data" class="panel">
-    <div style="font-size:12px;color:#888;margin-bottom:10px" id="sync-status">Loading from GitHub…</div>
-<div class="data-actions">
-      <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('import-input').click()">Import JSON</button>
-      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(this)">
-      <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
-    </div>
-    <div id="data-table-wrap"></div>
-  </div>
+<div class="page" id="tab-weights" style="display:none"></div>
+<div class="page" id="tab-insights" style="display:none"></div>
+<div class="page" id="tab-location" style="display:none"></div>
 </div>
-
+</div><!-- app-root -->
 <script>
-// ─── CRITERIA DEFINITION ───────────────────────────────────────────────────
-const CRITERIA = [
-  { id:'price', name:'Price', group:'basics', weight:8,
-    tiers:[
-      {label:'Full',desc:'Under $950k',score:1.0},
-      {label:'Good',desc:'$950k–$1M',score:0.5},
-      {label:'Over',desc:'Above $1M',score:0.0},
-    ]},
-  { id:'property_type', name:'Property Type', group:'basics', weight:7,
-    tiers:[
-      {label:'Full',desc:'Single family',score:1.0},
-      {label:'Good',desc:'Duplex / townhouse',score:0.6},
-      {label:'Low',desc:'Condo in small building',score:0.3},
-      {label:'None',desc:'Large condo building',score:0.0}
-    ]},
-  { id:'t_walk', name:'Walk to T / Commuter Rail', group:'basics', weight:5,
-    tiers:[
-      {label:'Full',desc:'Under 10 min walk',score:1.0},
-      {label:'Good',desc:'10–20 min walk',score:0.6},
-      {label:'Low',desc:'Short drive / bike',score:0.3},
-      {label:'None',desc:'Car dependent',score:0.0}
-    ]},
-  { id:'safety', name:'Safe Neighborhood', group:'basics', weight:7,
-    tiers:[
-      {label:'Full',desc:'Low crime, feels safe',score:1.0},
-      {label:'Good',desc:'Generally safe, minor concerns',score:0.6},
-      {label:'Low',desc:'Mixed, some concern',score:0.2},
-      {label:'None',desc:'High crime area',score:0.0}
-    ]},
-  { id:'sqft', name:'Square Footage', group:'space', weight:5,
-    tiers:[
-      {label:'Full',desc:'1,500–2,500 sqft',score:1.0},
-      {label:'Good',desc:'1,300–1,500 or 2,500–2,800',score:0.6},
-      {label:'Low',desc:'1,100–1,300 sqft',score:0.3},
-      {label:'None',desc:'Under 1,100 sqft',score:0.0}
-    ]},
-  { id:'beds', name:'Bedrooms / Office', group:'space', weight:6,
-    tiers:[
-      {label:'Full',desc:'3 bed or 2 bed + office',score:1.0},
-      {label:'Good',desc:'2 bed, could convert',score:0.5},
-      {label:'Low',desc:'2 bed, no office option',score:0.2},
-      {label:'None',desc:'1 bed',score:0.0}
-    ]},
-  { id:'yard', name:'Yard / Outdoor', group:'space', weight:5,
-    tiers:[
-      {label:'Full',desc:'Private yard, decent size',score:1.0},
-      {label:'Good',desc:'Small yard or shared outdoor',score:0.6},
-      {label:'Low',desc:'Minimal outdoor space',score:0.2},
-      {label:'None',desc:'No outdoor space',score:0.0}
-    ]},
-  { id:'layout', name:'Layout & Flow', group:'space', weight:4,
-    tiers:[
-      {label:'Full',desc:'Open, good natural light, sensible flow',score:1.0},
-      {label:'Good',desc:'Some awkwardness, mostly works',score:0.6},
-      {label:'Low',desc:'Choppy or dark',score:0.2},
-      {label:'None',desc:'Major layout problems',score:0.0}
-    ]},
-  { id:'condition', name:'Overall Condition', group:'systems', weight:6,
-    tiers:[
-      {label:'Full',desc:'Move-in ready',score:1.0},
-      {label:'Good',desc:'Cosmetic updates needed',score:0.6},
-      {label:'Low',desc:'Significant work needed',score:0.2},
-      {label:'None',desc:'Major renovation required',score:0.0}
-    ]},
-  { id:'roof', name:'Roof', group:'systems', weight:5,
-    tiers:[
-      {label:'Full',desc:'10+ years left',score:1.0},
-      {label:'Good',desc:'5–10 years left',score:0.6},
-      {label:'Low',desc:'2–5 years left',score:0.2},
-      {label:'None',desc:'Needs replacement now',score:0.0}
-    ]},
-  { id:'hvac', name:'HVAC / Heat', group:'systems', weight:5,
-    tiers:[
-      {label:'Full',desc:'Recent system, good condition',score:1.0},
-      {label:'Good',desc:'Functional, 5–10 years old',score:0.6},
-      {label:'Low',desc:'Older but working',score:0.3},
-      {label:'None',desc:'Needs replacement',score:0.0}
-    ]},
-  { id:'electrical', name:'Electrical', group:'systems', weight:5,
-    tiers:[
-      {label:'Full',desc:'Updated panel, no knob-and-tube',score:1.0},
-      {label:'Good',desc:'Functional, minor updates needed',score:0.6},
-      {label:'Low',desc:'Older panel, some work needed',score:0.2},
-      {label:'None',desc:'Knob-and-tube or needs full update',score:0.0}
-    ]},
-  { id:'plumbing', name:'Plumbing', group:'systems', weight:5,
-    tiers:[
-      {label:'Full',desc:'Updated, no galvanized pipes',score:1.0},
-      {label:'Good',desc:'Mostly good, minor issues',score:0.6},
-      {label:'Low',desc:'Some galvanized, functional',score:0.2},
-      {label:'None',desc:'Needs significant work',score:0.0}
-    ]},
-  { id:'windows', name:'Windows & Siding', group:'systems', weight:3,
-    tiers:[
-      {label:'Full',desc:'Replacement windows, good siding',score:1.0},
-      {label:'Good',desc:'Decent, some updates helpful',score:0.6},
-      {label:'Low',desc:'Older, some replacement needed',score:0.2},
-      {label:'None',desc:'Need full replacement',score:0.0}
-    ]},
-  { id:'architecture', name:'Architectural Interest', group:'character', weight:6, type:'stars',
-    starLabels:['No character','Some charm','Nice home','Really interesting','Exceptional']},
-  { id:'natural_light', name:'Natural Light', group:'character', weight:5,
-    tiers:[
-      {label:'Full',desc:'Bright, south/west exposure',score:1.0},
-      {label:'Good',desc:'Good light, some dark rooms',score:0.6},
-      {label:'Low',desc:'Mostly acceptable',score:0.3},
-      {label:'None',desc:'Dark throughout',score:0.0}
-    ]},
-  { id:'neighborhood_feel', name:'Neighborhood Feel / Walkability', group:'character', weight:6,
-    tiers:[
-      {label:'Full',desc:'Walkable restaurants + green space, JP/Brookline energy',score:1.0},
-      {label:'Good',desc:'Some walkability, pleasant streets',score:0.6},
-      {label:'Low',desc:'Quiet but car-dependent',score:0.3},
-      {label:'None',desc:'Strip mall / no character',score:0.0}
-    ]},
-  { id:'historic_age', name:'Historic Age (pre-1940)', group:'character', weight:4,
-    tiers:[
-      {label:'Full',desc:'Built before 1930',score:1.0},
-      {label:'Good',desc:'Built 2016 or newer',score:0.7},
-      {label:'Low',desc:'Built 1930–1959',score:0.3},
-      {label:'None',desc:'Built 1960–2015',score:0.0}
-    ]},
-  { id:'garage_basement', name:'Garage or High-Ceiling Basement', group:'extras', weight:6,
-    tiers:[
-      {label:'Full',desc:'2+ car garage OR basement ≥8ft ceiling',score:1.0},
-      {label:'Good',desc:'1-car garage or decent basement',score:0.6},
-      {label:'Low',desc:'Small garage or low basement',score:0.2},
-      {label:'None',desc:'No garage, no usable basement',score:0.0}
-    ]},
-  { id:'parking', name:'Dedicated Parking', group:'extras', weight:4,
-    tiers:[
-      {label:'Full',desc:'Off-street dedicated parking',score:1.0},
-      {label:'Good',desc:'Easy street parking',score:0.5},
-      {label:'Low',desc:'Limited street parking',score:0.2},
-      {label:'None',desc:'No parking available',score:0.0}
-    ]},
-  { id:'restaurants_walk', name:'Walk to Restaurants', group:'extras', weight:5,
-    tiers:[
-      {label:'Full',desc:'10+ min walk to multiple restaurants',score:1.0},
-      {label:'Good',desc:'15 min walk, some options',score:0.6},
-      {label:'Low',desc:'Short drive needed',score:0.2},
-      {label:'None',desc:'Car required for dining',score:0.0}
-    ]},
-  { id:'nature_walk', name:'Walk to Nature / Green Space', group:'extras', weight:4,
-    tiers:[
-      {label:'Full',desc:'Park, arboretum, or trails within 10 min walk',score:1.0},
-      {label:'Good',desc:'Some green space nearby',score:0.6},
-      {label:'Low',desc:'Drive to nature',score:0.2},
-      {label:'None',desc:'No green space nearby',score:0.0}
-    ]},
+const AL=['','No interest — generic, forgettable','Some charm — a few nice details','Pleasant — clearly older, good bones','Distinctive — real character and period detail','Exceptional — genuinely memorable architecture'];
+const LL=['','Very dark — few windows, north-facing','Below average — limited natural light','Decent light in main rooms','Bright and airy throughout','Exceptional — light-filled, great orientation'];
+const CRITERIA=[
+  {id:'t_stop',group:'Location',label:'Transit access',a:'Within 10-min walk of T stop',b:'10–20 min walk to T stop',c:'Within 10-min drive of commuter rail'},
+  {id:'portsmouth',group:'Location',label:'Drive to Portsmouth RI',a:'Within 30 min',b:'30–45 min',c:'45+ min'},
+  {id:'walkable',group:'Location',label:'Neighborhood quality',a:'Safe, walkable, attractive',b:'Decent but unremarkable',noC:true},
+  {id:'restaurants',group:'Location',label:'Walk to restaurants',a:'Within 10 min',b:'10–20 min walk',c:'Requires a drive'},
+  {id:'nature',group:'Location',label:'Walk to nature',a:'Within 10 min',b:'10–20 min walk',c:'Requires a drive'},
+  {id:'price',group:'Price',label:'Price',a:'Under $800k',b:'$800k–$850k',c:'$850k–$900k'},
+  {id:'sqft',group:'Size & type',label:'Square footage',a:'1,400 sq ft or larger',b:'1,200–1,400 sq ft',c:'Under 1,200 sq ft',note:'No penalty for over 1,800'},
+  {id:'type',group:'Size & type',label:'Home type',a:'Single family',b:'Duplex or townhouse',c:'Condo in small house'},
+  {id:'bedrooms',group:'Size & type',label:'Bedrooms',a:'2 bed + office or 3 bed',b:'2 bed, convertible space',noC:true},
+  {id:'ensuite',group:'Size & type',label:'Master bath',a:'Full ensuite',b:'Private, not ensuite',c:'Shared bath only'},
+  {id:'ceiling',group:'Size & type',label:'Ceiling height',a:'9 ft or taller',b:'8–9 ft',c:'Under 8 ft'},
+  {id:'storage',group:'Features',label:'Parking',a:'2+ car garage',b:'1-car garage or covered parking',c:'Deeded off-street parking',d:'No dedicated parking',hasD:true},
+  {id:'workshop',group:'Features',label:'Workshop space',a:'Dedicated workshop or large dry basement 8ft+',b:'Large garage or unfinished basement (convertible)',c:'No suitable space'},
+  {id:'fenced',group:'Features',label:'Fenced yard',a:'Fully fenced yard',b:'Partial fence or unfenced private',c:'No private yard'},
+  {id:'move_in',group:'Condition',label:'Move-in readiness',a:'Truly move-in ready',b:'Minor cosmetic work only',c:'Needs real work but sound'},
+  {id:'ac',group:'Condition',label:'Air conditioning',a:'Central AC',b:'Mini-splits or window units',c:'No AC'},
+  {id:'sys_roof',group:'Systems',label:'Roof',a:'Good 5+ years',b:'Good 2–5 years',c:'Needs replacement soon'},
+  {id:'sys_elec',group:'Systems',label:'Electrical',a:'Good 5+ years',b:'Good 2–5 years',c:'Needs replacement soon'},
+  {id:'sys_plumb',group:'Systems',label:'Plumbing',a:'Good 5+ years',b:'Good 2–5 years',c:'Needs replacement soon'},
+  {id:'sys_siding',group:'Systems',label:'Siding',a:'Good 5+ years',b:'Good 2–5 years',c:'Needs replacement soon'},
+  {id:'sys_windows',group:'Systems',label:'Windows',a:'Good 5+ years',b:'Good 2–5 years',c:'Needs replacement soon'},
+  {id:'sys_hvac',group:'Systems',label:'HVAC',a:'Good 5+ years',b:'Good 2–5 years',c:'Needs replacement soon'},
+  {id:'pre1940',group:'Character',label:'Age of home',a:'Built before 1940',b:'Built 1940–1960',c:'Built after 1960'},
+  {id:'hoa',group:'Features',label:'HOA fee',a:'No HOA fee',b:'HOA under $300/mo',c:'HOA $300–$600/mo',d:'HOA over $600/mo',hasD:true},
+  {id:'arch',group:'Character',label:'Architectural interest',type:'scale5',labels:AL},
+  {id:'light',group:'Character',label:'Natural light',type:'scale5',labels:LL},
 ];
+const DEFAULT_W={t_stop:8,portsmouth:7,walkable:8,restaurants:5,nature:5,price:9,sqft:6,type:7,bedrooms:7,ensuite:6,ceiling:6,storage:8,workshop:6,fenced:6,move_in:7,ac:5,sys_roof:5,sys_elec:5,sys_plumb:5,sys_siding:3,sys_windows:3,sys_hvac:5,pre1940:6,hoa:7,arch:7,light:7};
 
-// Neighborhood tier data
-const NBHD_TIERS = {
-  'tier1-rozzie-tappan':  { tier:'tier1', label:'Roslindale — Tappan/Walter/Arboretum edge', score:1.0 },
-  'tier1-rozzie-village': { tier:'tier1', label:'Roslindale — Metropolitan Hill / Adams Park', score:0.95 },
-  'tier1-wr-centre':      { tier:'tier1', label:'West Roxbury — Centre St + Corey St', score:0.9 },
-  'tier1-wr-bellevue':    { tier:'tier1', label:'West Roxbury — Bellevue Hill', score:0.85 },
-  'tier1-wr-millennium':  { tier:'tier1', label:'West Roxbury — Millennium Park edge', score:0.8 },
-  'tier1-hp-fairmount':   { tier:'tier1', label:'Hyde Park — Fairmount Hill', score:0.75 },
-  'tier2-dedham':         { tier:'tier2', label:'Dedham Square — near Endicott station', score:0.8 },
-  'tier2-natick':         { tier:'tier2', label:'Natick Center — village core', score:0.85 },
-  'tier2-norwood':        { tier:'tier2', label:'Norwood Center — near station', score:0.7 },
-  'tier2-walpole':        { tier:'tier2', label:'Walpole Center — near Union Station', score:0.65 },
-  'tier2-plymouth':       { tier:'tier2', label:'Plymouth Historic Downtown', score:0.7 },
-  'other-rozzie':         { tier:'other', label:'Roslindale (outside target streets)', score:0.4 },
-  'other-wr':             { tier:'other', label:'West Roxbury (outside target streets)', score:0.35 },
-  'other-hp':             { tier:'other', label:'Hyde Park (outside Fairmount Hill)', score:0.2 },
-  'other-jp':             { tier:'other', label:'Jamaica Plain', score:0.5 },
-  'other-metro':          { tier:'other', label:'Other area', score:0.1 },
-  'other':                { tier:'other', label:'Outside target areas', score:0.0 },
-};
+// ── Supabase persistent storage ─────────────────────────────────────────
+const SB_URL='https://ovymgkyzwtobkiphpoed.supabase.co';
+const SB_KEY='sb_publishable_6YYiqctG59yOTGETh262jQ_FsxtjfTi';
+const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'resolution=merge-duplicates'};
 
-// ─── STATE ─────────────────────────────────────────────────────────────────
-let weights = {};
-let listings = [];
-let editingId = null;
-
-CRITERIA.forEach(c => weights[c.id] = c.weight);
-weights['neighborhood_tier'] = 7;
-
-// Load from GitHub data.json on startup, fall back to localStorage
-const DATA_URL = 'https://raw.githubusercontent.com/jpherron/jphousehunter/main/data.json?nocache=' + Date.now();
-
-async function loadData() {
-  try {
-    const res = await fetch(DATA_URL);
-    if (res.ok) {
-      const d = await res.json();
-      if (d.listings) listings = d.listings;
-      if (d.weights) weights = {...weights, ...d.weights};
-      renderListings();
-      renderDataTable();
-      const el = document.getElementById('sync-status');
-      if (el) el.textContent = 'Loaded from GitHub · ' + listings.length + ' listings';
-      return;
+async function serverGet(key){
+  try{
+    const controller=new AbortController();
+    const tid=setTimeout(()=>controller.abort(),4000);
+    const r=await fetch(SB_URL+'/rest/v1/hev_store?key=eq.'+encodeURIComponent(key)+'&select=value',{headers:SB_HEADERS,signal:controller.signal});
+    clearTimeout(tid);
+    if(r.ok){
+      const d=await r.json();
+      if(d&&d.length>0)return d[0].value;
     }
-  } catch(e) {}
-  // Fallback to localStorage
-  try { const s = localStorage.getItem('he_listings'); if(s) listings = JSON.parse(s); } catch(e){}
-  try { const s = localStorage.getItem('he_weights'); if(s) weights = {...weights,...JSON.parse(s)}; } catch(e){}
-  renderListings();
+  }catch(e){}
+  try{return localStorage.getItem(key);}catch(e){return null;}
 }
 
-function save() {
-  localStorage.setItem('he_listings', JSON.stringify(listings));
-  localStorage.setItem('he_weights', JSON.stringify(weights));
-}
-
-// ─── SCORING ───────────────────────────────────────────────────────────────
-function scoreClass(s) {
-  if(s>=80) return 'great'; if(s>=65) return 'good'; if(s>=45) return 'ok'; return 'poor';
-}
-
-function calcScore(listing) {
-  let total=0, max=0;
-  CRITERIA.forEach(c => {
-    const w = weights[c.id]||0;
-    if(!w) return;
-    max += w;
-    const val = listing.scores?.[c.id];
-    if(val===undefined||val===null) return;
-    if(c.type==='stars') {
-      total += w * (val/5);
-    } else {
-      const tier = c.tiers?.[val];
-      if(tier) total += w * tier.score;
-    }
-  });
-  // Neighborhood tier
-  const nw = weights['neighborhood_tier']||0;
-  max += nw;
-  const nbhd = NBHD_TIERS[listing.neighborhood_tier||'other'];
-  total += nw * (nbhd?.score||0);
-
-  return max>0 ? Math.round((total/max)*100) : 0;
-}
-
-function getNbhdInfo(key) {
-  return NBHD_TIERS[key||'other'] || NBHD_TIERS['other'];
-}
-
-// ─── RENDER CRITERIA ───────────────────────────────────────────────────────
-function renderCriteria() {
-  const groups = {basics:'crit-basics',space:'crit-space',systems:'crit-systems',character:'crit-character',extras:'crit-extras'};
-  Object.values(groups).forEach(id => document.getElementById(id).innerHTML='');
-  CRITERIA.forEach(c => {
-    const el = document.getElementById(groups[c.group]);
-    if(!el) return;
-    const w = weights[c.id]||c.weight;
-    let tiersHTML = '';
-    if(c.type==='stars') {
-      tiersHTML = `<div class="stars" id="stars-${c.id}" style="margin-top:6px">${[1,2,3,4,5].map(i=>`<span class="star" onclick="void(0)" title="${c.starLabels[i-1]}">★</span>`).join('')}</div><div style="font-size:11px;color:#888;margin-top:3px">Rating scale: 1=no character → 5=exceptional</div>`;
-    } else {
-      tiersHTML = `<div class="tiers">${c.tiers.map((t,i)=>`<div class="tier ${i===0?'full':i===1?'partial':i===2?'partial':'low'}"><span>${t.label} (${Math.round(t.score*100)}%)</span>${t.desc}</div>`).join('')}</div>`;
-    }
-    el.innerHTML += `<div class="crit-row"><div class="crit-top"><span class="crit-name">${c.name}</span><span class="crit-wval" id="wval-${c.id}">${w}</span><input type="range" min="1" max="10" value="${w}" oninput="updateWeight('${c.id}',this.value)"></div>${tiersHTML}</div>`;
-  });
-}
-
-function updateWeight(id, val) {
-  weights[id] = Number(val);
-  const el = document.getElementById('wval-'+id);
-  if(el) el.textContent = val;
-  save();
-  renderListings();
-}
-
-// ─── LISTINGS ──────────────────────────────────────────────────────────────
-function renderListings() {
-  const el = document.getElementById('listings-list');
-  document.getElementById('listing-count').textContent = listings.length;
-  if(!listings.length) {
-    el.innerHTML='<div class="empty"><div style="font-size:32px">🏠</div><p>No listings yet. Add one to get started.</p></div>';
-    return;
-  }
-  const scored = listings.map(l=>({...l,_score:calcScore(l)})).sort((a,b)=>b._score-a._score);
-  el.innerHTML = scored.map((l,i)=>{
-    const sc = scoreClass(l._score);
-    const nbhd = getNbhdInfo(l.neighborhood_tier);
-    const tierBadgeClass = nbhd.tier==='tier1'?'tier1':nbhd.tier==='tier2'?'tier2':'other';
-    const tierEmoji = nbhd.tier==='tier1'?'🟢':nbhd.tier==='tier2'?'🟡':'⚫';
-    const nbhdScore = Math.round((nbhd.score||0)*100);
-    const nbhdBarColor = nbhdScore>=80?'#16a34a':nbhdScore>=55?'#d97706':'#9ca3af';
-    return `<div class="listing-card">
-      <div class="listing-card-header" onclick="toggleExpand('${l.id}')">
-        <div class="listing-rank">#${i+1}</div>
-        <div class="listing-info">
-          <div class="listing-address">${l.address||'Untitled listing'}</div>
-          <div class="listing-meta">
-            <span>${l.price||'—'}</span>
-            ${l.status==='pending'?'<span class="status-badge pending">⏳ Pending</span>':l.status==='under_contract'?'<span class="status-badge under_contract">🔒 Under Contract</span>':''}
-            ${l.url?`<a href="${l.url}" target="_blank" onclick="event.stopPropagation()" style="color:#2563eb;text-decoration:none">View listing →</a>`:''}
-            <span class="nbhd-badge ${tierBadgeClass}">${tierEmoji} ${nbhd.label}</span>
-          </div>
-        </div>
-        <div class="listing-score ${sc}">${l._score}</div>
-      </div>
-      <div id="expand-${l.id}" class="listing-expanded hidden">
-        <div class="nbhd-bar-wrap">
-          <div class="nbhd-bar-label"><span>Neighborhood fit</span><span>${nbhdScore}/100</span></div>
-          <div class="nbhd-bar-track"><div class="nbhd-bar-fill" style="width:${nbhdScore}%;background:${nbhdBarColor}"></div></div>
-        </div>
-        <div class="score-breakdown">${CRITERIA.map(c=>{
-          const val = l.scores?.[c.id];
-          if(val===undefined||val===null) return `<div class="score-item"><span>${c.name}</span><span class="val none">—</span></div>`;
-          let display, cls;
-          if(c.type==='stars'){
-            display='★'.repeat(val)+'☆'.repeat(5-val);
-            cls=val>=4?'full':val>=3?'partial':val>=2?'low':'none';
-          } else {
-            const t=c.tiers?.[val];
-            display=t?t.label:'—';
-            cls=val===0?'full':val===1?'partial':val===2?'low':'none';
-          }
-          return `<div class="score-item"><span>${c.name}</span><span class="val ${cls}">${display}</span></div>`;
-        }).join('')}</div>
-        <div class="listing-actions">
-          <button class="btn btn-secondary" onclick="editListing('${l.id}')">Edit scores</button>
-          <button class="btn btn-danger" onclick="deleteListing('${l.id}')">Delete</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function toggleExpand(id) {
-  const el = document.getElementById('expand-'+id);
-  if(el) el.classList.toggle('hidden');
-}
-
-function deleteListing(id) {
-  if(!confirm('Delete this listing?')) return;
-  listings = listings.filter(l=>l.id!==id);
-  save(); renderListings();
-}
-
-function editListing(id) {
-  const l = listings.find(x=>x.id===id);
-  if(!l) return;
-  editingId = id;
-  document.getElementById('f-address').value = l.address||'';
-  document.getElementById('f-price').value = l.price||'';
-  document.getElementById('f-url').value = l.url||'';
-  document.getElementById('f-year').value = l.year||'';
-  document.getElementById('f-nbhd-tier').value = l.neighborhood_tier||'other';
-  showPanel('add');
-  buildManualForm(l.scores||{});
-  document.getElementById('manual-form').style.display='block';
-}
-
-// ─── ADD / SCORE ────────────────────────────────────────────────────────────
-async function scoreWithAI() {
-  const description = document.getElementById('f-description').value.trim();
-  if(!description) { alert('Please paste a listing description first.'); return; }
-  const status = document.getElementById('ai-status');
-  status.style.display='block'; status.textContent='Analyzing listing…';
-
-  const criteriaDesc = CRITERIA.map(c=>{
-    if(c.type==='stars') return `${c.id} (${c.name}): Rate 1–5. 1=${c.starLabels[0]}, 3=${c.starLabels[2]}, 5=${c.starLabels[4]}`;
-    return `${c.id} (${c.name}): ${c.tiers.map((t,i)=>`${i}=${t.desc}`).join(' | ')}`;
-  }).join('\n');
-
-  const prompt = `You are scoring a house listing against specific criteria. Return ONLY a JSON object, no other text.
-
-LISTING TEXT:
-${description}
-
-CRITERIA TO SCORE (return the index number for each):
-${criteriaDesc}
-
-Also extract: address (string), price (string with $), year_built (string).
-
-Return this exact JSON structure:
-{
-  "address": "...",
-  "price": "$...",
-  "year_built": "1925",
-  "scores": {
-    "price": 0,
-    "property_type": 0,
-    "t_walk": 0,
-    "safety": 0,
-    "sqft": 0,
-    "beds": 0,
-    "yard": 0,
-    "layout": 0,
-    "condition": 0,
-    "roof": 0,
-    "hvac": 0,
-    "electrical": 0,
-    "plumbing": 0,
-    "windows": 0,
-    "architecture": 3,
-    "natural_light": 0,
-    "neighborhood_feel": 0,
-    "historic_age": 0,
-    "garage_basement": 0,
-    "parking": 0,
-    "restaurants_walk": 0,
-    "nature_walk": 0
-  }
-}`;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
+async function serverSet(key,val){
+  try{
+    await fetch(SB_URL+'/rest/v1/hev_store',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+      headers:SB_HEADERS,
+      body:JSON.stringify({key,value:val,updated_at:new Date().toISOString()})
     });
-    const data = await res.json();
-    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('No JSON in response');
-    const parsed = JSON.parse(jsonMatch[0]);
+  }catch(e){}
+  try{localStorage.setItem(key,val);}catch(e){}
+}
 
-    // Pre-fill form fields if address/price found
-    if(parsed.address && !document.getElementById('f-address').value) document.getElementById('f-address').value = parsed.address;
-    if(parsed.price && !document.getElementById('f-price').value) document.getElementById('f-price').value = parsed.price;
-    if(parsed.year_built && !document.getElementById('f-year').value) document.getElementById('f-year').value = parsed.year_built;
+let lastImportJson=null;
+let jsonPanelOpen=false;
+function saveLastJson(json){lastImportJson=json;serverSet('hev_last_json',json);}
 
-    status.textContent='Done! Review scores below, then save.';
-    buildManualForm(parsed.scores||{});
-    document.getElementById('manual-form').style.display='block';
-  } catch(e) {
-    status.textContent='Error: '+e.message+'. Try adding manually.';
+let weights={...DEFAULT_W};
+let listings=[];
+let locPrefs={};
+let locWeight=8;
+let activeTab='dashboard';
+let expanded=null;
+
+async function saveWeights(){await serverSet('hev_weights',JSON.stringify(weights));}
+async function saveListings(){await serverSet('hev_listings',JSON.stringify(listings));}
+async function saveLocPrefs(){await serverSet('hev_locprefs',JSON.stringify(locPrefs));}
+async function saveLocWeight(v){locWeight=+v;await serverSet('hev_locweight',String(v));}
+
+async function withTimeout(promise, ms=5000){
+  return Promise.race([promise, new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),ms))]);
+}
+
+async function loadAllState(){
+  try{
+    const [wRaw,lRaw,ljRaw,lpRaw,lwRaw]=await withTimeout(Promise.all([
+      serverGet('hev_weights'),
+      serverGet('hev_listings'),
+      serverGet('hev_last_json'),
+      serverGet('hev_locprefs'),
+      serverGet('hev_locweight'),
+    ]));
+    if(wRaw){try{const p=JSON.parse(wRaw);Object.keys(p).forEach(k=>{if(k in weights)weights[k]=+p[k];});}catch(e){}}
+    if(lRaw){try{listings=JSON.parse(lRaw);}catch(e){}}
+    if(ljRaw){lastImportJson=ljRaw;}
+    if(lpRaw){try{locPrefs=JSON.parse(lpRaw);}catch(e){}}
+    if(lwRaw){locWeight=+lwRaw;}
+  }catch(e){
+    console.warn('Server load failed, using localStorage:', e.message);
+    try{const s=localStorage.getItem('hev_weights');if(s){const p=JSON.parse(s);Object.keys(p).forEach(k=>{if(k in weights)weights[k]=+p[k];});}}catch(e){}
+    try{const s=localStorage.getItem('hev_listings');if(s)listings=JSON.parse(s);}catch(e){}
+    try{lastImportJson=localStorage.getItem('hev_last_json');}catch(e){}
+    try{const s=localStorage.getItem('hev_locprefs');if(s)locPrefs=JSON.parse(s);}catch(e){}
+    try{const s=localStorage.getItem('hev_locweight');if(s)locWeight=+s;}catch(e){}
   }
 }
 
-function addManually() {
-  buildManualForm({});
-  document.getElementById('manual-form').style.display='block';
+function extractTown(name){
+  const m=name.match(/,\s*([^,]+?)\s+MA\s*$/i);
+  if(!m)return null;
+  return m[1].trim();
 }
 
-function buildManualForm(existingScores) {
-  const el = document.getElementById('manual-criteria');
-  el.innerHTML = CRITERIA.map(c=>{
-    const val = existingScores[c.id];
-    if(c.type==='stars') {
-      const v = val||0;
-      return `<div class="crit-row"><div class="crit-name" style="font-size:13px;font-weight:500;margin-bottom:6px">${c.name}</div>
-        <div class="stars" id="mstars-${c.id}">${[1,2,3,4,5].map(i=>`<span class="star${i<=v?' on':''}" onclick="setStars('${c.id}',${i})" title="${c.starLabels[i-1]}">★</span>`).join('')}</div>
-        <div style="font-size:11px;color:#888;margin-top:3px" id="star-label-${c.id}">${v>0?c.starLabels[v-1]:'Click to rate'}</div>
-      </div>`;
+function syncLocPrefs(){
+  listings.forEach(l=>{
+    const town=extractTown(l.name);
+    if(town&&!locPrefs[town]){
+      locPrefs[town]={name:town,rating:null};
     }
-    return `<div class="crit-row"><div class="crit-name" style="font-size:13px;font-weight:500;margin-bottom:6px">${c.name}</div>
-      <div class="tiers">${c.tiers.map((t,i)=>`<div class="tier${val===i?' selected':''}" onclick="selectTier('${c.id}',${i},this)"><span>${t.label}</span>${t.desc}</div>`).join('')}</div>
-    </div>`;
-  }).join('');
+  });
+  saveLocPrefs();
 }
 
-function selectTier(id, idx, el) {
-  el.closest('.tiers').querySelectorAll('.tier').forEach(t=>t.classList.remove('selected'));
-  el.classList.add('selected');
+function locScore(l){
+  const town=extractTown(l.name);
+  if(!town)return null;
+  const pref=locPrefs[town];
+  if(!pref||pref.rating===null)return null;
+  return(pref.rating-1)/4;
 }
 
-function setStars(id, val) {
-  const container = document.getElementById('mstars-'+id);
-  container.querySelectorAll('.star').forEach((s,i)=>{s.className='star'+(i<val?' on':'');});
-  const c = CRITERIA.find(x=>x.id===id);
-  const lbl = document.getElementById('star-label-'+id);
-  if(lbl && c) lbl.textContent = c.starLabels[val-1];
-  container.dataset.val = val;
+function newListing(o={}){const scores={};CRITERIA.forEach(c=>scores[c.id]=c.type==='scale5'?0:'unknown');return{name:'',url:'',scores,notes:'',lat:null,lng:null,gut:null,...o};}
+function multiplier(s,c){if(c.type==='scale5')return s&&s>0?(s-1)/4:null;if(s==='a')return 1;if(s==='b')return 0.5;if(s==='c')return c.noC?null:0.25;if(s==='d')return c.hasD?0:null;return null;}
+function pointsEarned(s,c){const m=multiplier(s,c);return m===null?null:+(m*weights[c.id]).toFixed(2);}
+function getScore(l){
+  let total=0,max=0;
+  CRITERIA.forEach(c=>{const pts=pointsEarned(l.scores[c.id],c);if(pts!==null){total+=pts;max+=weights[c.id];}});
+  const ls=locScore(l);
+  if(ls!==null){total+=ls*locWeight;max+=locWeight;}
+  const n=Object.values(l.scores).filter(v=>v&&v!=='unknown'&&v!==0).length;
+  return n<6?null:Math.round((total/max)*100);
+}
+function badge(sc){if(sc===null)return'<span class="score-badge s-na">—</span>';return`<span class="score-badge ${sc>=70?'s-hi':sc>=45?'s-md':'s-lo'}">${sc}%</span>`;}
+function barColor(s){return s>=70?'#1D9E75':s>=45?'#BA7517':'#E24B4A';}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function cellBg(pts,maxPts,isDZero){
+  if(pts===null)return{bg:'#f9f9f9',text:'#bbb'};
+  if(isDZero)return{bg:'#2d0a0a',text:'#ffb3b3'};
+  const r=maxPts>0?pts/maxPts:0;
+  if(r>=1)return{bg:'#EAF3DE',text:'#27500A'};
+  if(r>=0.65)return{bg:'#E1F5EE',text:'#085041'};
+  if(r>=0.4)return{bg:'#FAEEDA',text:'#633806'};
+  if(r>=0.15)return{bg:'#FAECE7',text:'#712B13'};
+  return{bg:'#FCEBEB',text:'#791F1F'};
+}
+function totalBg(sc){if(sc===null)return{bg:'#f9f9f9',text:'#bbb'};if(sc>=70)return{bg:'#EAF3DE',text:'#27500A'};if(sc>=50)return{bg:'#FAEEDA',text:'#633806'};return{bg:'#FCEBEB',text:'#791F1F'};}
+
+function showTab(t){
+  activeTab=t;
+  ['listings','map','weights','insights','location','data'].forEach(id=>document.getElementById('tab-'+id).style.display=id===t?'':'none');
+  renderTabs();
+  if(t==='map')renderMap();
+  if(t==='listings')renderListings();
+  if(t==='weights')renderWeights();
+  if(t==='insights')renderInsights();
+  if(t==='location')renderLocation();
+  if(t==='data')renderData();
 }
 
-function saveManual() {
-  const address = document.getElementById('f-address').value.trim();
-  if(!address) { alert('Please enter an address.'); return; }
-  const scores = {};
-  CRITERIA.forEach(c=>{
-    if(c.type==='stars') {
-      const container = document.getElementById('mstars-'+c.id);
-      scores[c.id] = container ? Number(container.dataset.val||0) : 0;
-    } else {
-      const sel = document.querySelector(`#manual-criteria [onclick*="selectTier('${c.id}'"][class*="selected"]`);
-      if(sel) {
-        const match = sel.getAttribute('onclick').match(/selectTier\('[^']+',(\d+)/);
-        if(match) scores[c.id] = Number(match[1]);
+
+let mapInstance = null;
+let mapMarkers = [];
+let geocodeCache = {};
+let selectedMapListing = null;
+
+function scoreColor(sc) {
+  if (sc === null) return '#aaa';
+  if (sc >= 70) return '#1D9E75';
+  if (sc >= 45) return '#BA7517';
+  return '#E24B4A';
+}
+
+function cleanAddressForGeocoding(name) {
+  let a = name.replace(/#[\w\d]+/gi, '').replace(/\bunit\s+[\w\d]+/gi, '');
+  a = a.replace(/\bDorchester\b/gi, 'Boston').replace(/\bJamaica Plain\b/gi, 'Boston');
+  a = a.replace(/\b(Chablis|Tuscan|Falcon|Cardinal|Mallard|Salerno|Abbeyville)\s+Plan\b/gi, '');
+  a = a.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim().replace(/^,|,$/g, '').trim();
+  return a;
+}
+
+async function geocodeAddress(name) {
+  if (geocodeCache[name]) return geocodeCache[name];
+  const cleaned = cleanAddressForGeocoding(name);
+  const q = encodeURIComponent(cleaned + ', MA, USA');
+  try {
+    const r = await fetch('https://nominatim.openstreetmap.org/search?q=' + q + '&format=json&limit=1', {
+      headers: { 'Accept-Language': 'en', 'User-Agent': 'HouseEvaluator/1.0' }
+    });
+    const d = await r.json();
+    if (d && d.length > 0) {
+      const coords = [parseFloat(d[0].lat), parseFloat(d[0].lon)];
+      geocodeCache[name] = coords;
+      serverSet('hev_geocache', JSON.stringify(geocodeCache));
+      return coords;
+    }
+    const parts = cleaned.split(',');
+    if (parts.length >= 2) {
+      const q2 = encodeURIComponent(parts[0].trim() + ', ' + parts[parts.length-1].trim() + ', MA, USA');
+      await new Promise(res => setTimeout(res, 1100));
+      const r2 = await fetch('https://nominatim.openstreetmap.org/search?q=' + q2 + '&format=json&limit=1', {
+        headers: { 'Accept-Language': 'en', 'User-Agent': 'HouseEvaluator/1.0' }
+      });
+      const d2 = await r2.json();
+      if (d2 && d2.length > 0) {
+        const coords = [parseFloat(d2[0].lat), parseFloat(d2[0].lon)];
+        geocodeCache[name] = coords;
+        serverSet('hev_geocache', JSON.stringify(geocodeCache));
+        return coords;
       }
     }
-  });
+  } catch(e) {}
+  return null;
+}
 
-  const listing = {
-    id: editingId || ('l'+Date.now()),
-    address,
-    price: document.getElementById('f-price').value.trim(),
-    url: document.getElementById('f-url').value.trim(),
-    year: document.getElementById('f-year').value.trim(),
-    neighborhood_tier: document.getElementById('f-nbhd-tier').value,
-    scores,
-    added: editingId ? (listings.find(l=>l.id===editingId)?.added||new Date().toISOString()) : new Date().toISOString()
-  };
-
-  if(editingId) {
-    listings = listings.map(l=>l.id===editingId?listing:l);
-    editingId = null;
-  } else {
-    listings.push(listing);
+async function renderMap() {
+  const tab = document.getElementById('tab-map');
+  if (!listings.length) {
+    tab.innerHTML = '<div class="empty" style="padding:3rem">Import some listings first.</div>';
+    return;
   }
-  save();
 
-  // Reset form
-  ['f-address','f-price','f-url','f-year','f-description'].forEach(id=>{document.getElementById(id).value='';});
-  document.getElementById('f-nbhd-tier').value='other';
-  document.getElementById('manual-form').style.display='none';
-  document.getElementById('ai-status').style.display='none';
+  try {
+    const cached = await serverGet('hev_geocache');
+    if (cached) geocodeCache = {...JSON.parse(cached), ...geocodeCache};
+  } catch(e) {}
 
-  showPanel('listings');
-  renderListings();
+  tab.innerHTML = `
+    <div id="map-container">
+      <div id="map"></div>
+      <div id="map-panel">
+        <div id="map-panel-handle"></div>
+        <div id="map-panel-content"></div>
+      </div>
+    </div>
+    <div id="geocode-status" style="display:none;padding:8px 16px;background:#f9f9f9;border-top:1px solid #f0f0f0;font-size:12px;color:#888;text-align:center"></div>
+    <div id="map-list-bar" style="padding:12px 16px;background:#fff;border-top:1px solid #f0f0f0;overflow-x:auto;white-space:nowrap;display:flex;gap:8px;-webkit-overflow-scrolling:touch">
+    </div>`;
+
+  if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+  mapMarkers = [];
+  setTimeout(() => {
+    mapInstance = L.map('map').setView([42.32, -71.08], 10);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(mapInstance);
+    plotListings();
+  }, 50);
 }
 
-// ─── DATA ──────────────────────────────────────────────────────────────────
-function renderDataTable() {
-  const el = document.getElementById('data-table-wrap');
-  if(!listings.length){el.innerHTML='<div class="empty"><p>No listings to display.</p></div>';return;}
-  const scored = listings.map(l=>({...l,_score:calcScore(l)})).sort((a,b)=>b._score-a._score);
-  el.innerHTML=`<table class="data-table"><thead><tr><th>#</th><th>Address</th><th>Price</th><th>Neighborhood</th><th>Score</th><th>Added</th></tr></thead><tbody>${
-    scored.map((l,i)=>`<tr><td>${i+1}</td><td>${l.address||'—'}</td><td>${l.price||'—'}</td><td>${getNbhdInfo(l.neighborhood_tier).label}</td><td><strong>${l._score}</strong></td><td>${l.added?new Date(l.added).toLocaleDateString():'—'}</td></tr>`).join('')
-  }</tbody></table>`;
+async function plotListings() {
+  const sorted = [...listings].map((l,i) => ({...l, _i:i, sc:getScore(l)}))
+    .sort((a,b) => (b.sc||0)-(a.sc||0));
+
+  const bar = document.getElementById('map-list-bar');
+  if (bar) {
+    bar.innerHTML = sorted.map((l,rank) => {
+      const sc = l.sc;
+      const bg = scoreColor(sc);
+      return `<div onclick="focusMapListing(${l._i})" id="mapbar-${l._i}"
+        style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid #eee;border-radius:20px;cursor:pointer;flex-shrink:0;background:#fff;-webkit-tap-highlight-color:transparent">
+        <div style="width:22px;height:22px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#fff">${rank+1}</div>
+        <span style="font-size:12px;font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis">${esc(l.name.split(',')[0])}</span>
+        ${sc!==null?`<span style="font-size:11px;font-weight:500;color:${bg}">${sc}%</span>`:''}
+      </div>`;
+    }).join('');
+  }
+
+  const bounds = [];
+  for (let i = 0; i < sorted.length; i++) {
+    const l = sorted[i];
+    const rank = i + 1;
+    let coords = (l.lat && l.lng) ? [l.lat, l.lng] : (geocodeCache[l.name] || null);
+    if (!coords) {
+      const statusEl = document.getElementById('geocode-status');
+      if (statusEl) { statusEl.style.display='block'; statusEl.textContent = 'Locating ' + (i+1) + ' of ' + sorted.length + ': ' + l.name.split(',')[0] + '…'; }
+      if (i > 0) await new Promise(r => setTimeout(r, 1100));
+      coords = await geocodeAddress(l.name);
+    }
+    if (coords && !l.lat) {
+      listings[l._i].lat = coords[0];
+      listings[l._i].lng = coords[1];
+      saveListings();
+    }
+    if (!coords) continue;
+    bounds.push(coords);
+
+    const sc = l.sc;
+    const bg = scoreColor(sc);
+    const label = sc !== null ? sc + '%' : '?';
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:42px;height:42px;border-radius:50%;background:${bg};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer">
+        <span style="font-size:9px;font-weight:700;color:#fff;line-height:1">#${rank}</span>
+        <span style="font-size:9px;font-weight:600;color:#fff;line-height:1">${label}</span>
+      </div>`,
+      iconSize: [42, 42],
+      iconAnchor: [21, 21],
+      popupAnchor: [0, -24]
+    });
+
+    const marker = L.marker(coords, {icon}).addTo(mapInstance);
+    marker._listingIdx = l._i;
+    marker.on('click', () => showMapPanel(l._i));
+    mapMarkers.push({idx: l._i, marker, coords});
+  }
+
+  const statusEl = document.getElementById('geocode-status');
+  if (statusEl) statusEl.style.display = 'none';
+  if (bounds.length > 1) mapInstance.fitBounds(bounds, {padding: [40, 40]});
+  else if (bounds.length === 1) mapInstance.setView(bounds[0], 14);
 }
 
-function exportData() {
-  const blob = new Blob([JSON.stringify({listings,weights},null,2)],{type:'application/json'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='house-evaluator-data.json'; a.click();
+function showMapPanel(idx) {
+  selectedMapListing = idx;
+  const l = listings[idx];
+  const sc = getScore(l);
+  const bg = scoreColor(sc);
+  const panel = document.getElementById('map-panel');
+  const content = document.getElementById('map-panel-content');
+  if (!panel || !content) return;
+
+  const topCrit = CRITERIA
+    .filter(c => { const v = l.scores[c.id]; return v && v !== 'unknown' && v !== 0; })
+    .sort((a,b) => weights[b.id] - weights[a.id])
+    .slice(0, 6);
+
+  let critHtml = topCrit.map(c => {
+    const s = l.scores[c.id];
+    let lbl = '—', col = '#aaa';
+    if (c.type === 'scale5') { if (s > 0) { lbl = s+'/5'; col = s >= 4 ? '#1D9E75' : s >= 3 ? '#BA7517' : '#E24B4A'; }}
+    else { if(s==='a'){lbl='✓';col='#1D9E75';}else if(s==='b'){lbl='~';col='#BA7517';}else if(s==='c'){lbl='✗';col='#E24B4A';} }
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5">
+      <span style="font-size:12px;color:#666">${c.label}</span>
+      <span style="font-size:12px;font-weight:500;color:${col}">${lbl}</span>
+    </div>`;
+  }).join('');
+
+  content.innerHTML = `
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+      <div>
+        <div style="font-size:15px;font-weight:500">${esc(l.name)}</div>
+        ${l.url ? `<a href="${esc(l.url)}" target="_blank" style="font-size:12px;font-weight:500;color:#2563eb;text-decoration:none;white-space:nowrap">View on Redfin ↗</a>` : ''}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;margin-left:12px">
+        ${badge(sc)}
+        <button onclick="closeMapPanel()" style="background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;padding:0 4px;line-height:1">×</button>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">${critHtml}</div>
+    <button class="btn btn-sm" onclick="goEdit(${idx})" style="width:100%">Edit scores</button>
+  `;
+  panel.classList.add('open');
+
+  document.querySelectorAll('[id^=mapbar-]').forEach(el => {
+    el.style.borderColor = el.id === 'mapbar-'+idx ? '#1a1a1a' : '#eee';
+    el.style.borderWidth = el.id === 'mapbar-'+idx ? '1.5px' : '1px';
+  });
 }
 
-function importData(input) {
-  const file = input.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
+function closeMapPanel() {
+  const panel = document.getElementById('map-panel');
+  if (panel) panel.classList.remove('open');
+  selectedMapListing = null;
+  document.querySelectorAll('[id^=mapbar-]').forEach(el => {
+    el.style.borderColor = '#eee';
+    el.style.borderWidth = '1px';
+  });
+}
+
+function focusMapListing(idx) {
+  const m = mapMarkers.find(m => m.idx === idx);
+  if (m && mapInstance) {
+    mapInstance.setView(m.coords, 15, {animate: true});
+    showMapPanel(idx);
+  }
+}
+
+function exportData(){
+  const data={listings,weights,geocodeCache,locPrefs,locWeight};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='house-evaluator-data-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importDataFile(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
     try{
-      const d=JSON.parse(e.target.result);
-      if(d.listings) listings=d.listings;
-      if(d.weights) weights={...weights,...d.weights};
-      save(); renderCriteria(); renderListings(); renderDataTable();
-      alert('Imported successfully.');
-    }catch(err){alert('Error importing: '+err.message);}
+      const data=JSON.parse(e.target.result);
+      const el=document.getElementById('data-status');
+      if(data.listings&&Array.isArray(data.listings)){
+        listings=data.listings;
+        saveListings();
+      }
+      if(data.weights&&typeof data.weights==='object'){
+        Object.keys(data.weights).forEach(k=>{if(k in weights)weights[k]=+data.weights[k];});
+        saveWeights();
+      }
+      if(data.geocodeCache&&typeof data.geocodeCache==='object'){
+        geocodeCache=data.geocodeCache;
+        serverSet('hev_geocache',JSON.stringify(geocodeCache));
+      }
+      if(data.locPrefs&&typeof data.locPrefs==='object'){
+        locPrefs=data.locPrefs;
+        saveLocPrefs();
+      }
+      if(data.locWeight!==undefined){
+        locWeight=+data.locWeight;
+        saveLocWeight(locWeight);
+      }
+      if(el)el.textContent=`Loaded ${listings.length} listings from ${file.name}`;
+      renderListings();
+    }catch(err){
+      const el=document.getElementById('data-status');
+      if(el){el.style.color='#c0392b';el.textContent='Could not read file: '+err.message;}
+    }
   };
   reader.readAsText(file);
 }
 
-function clearAll() {
-  if(!confirm('Delete all listings? This cannot be undone.')) return;
-  listings=[]; save(); renderListings(); renderDataTable();
+function renderWeights(){
+  const groups=[...new Set(CRITERIA.map(c=>c.group))];
+  let html='';
+  groups.forEach(g=>{
+    html+=`<div class="section"><div class="section-title">${g}</div>`;
+    CRITERIA.filter(c=>c.group===g).forEach(c=>{
+      html+=`<div class="crit-row"><div class="crit-name">${c.label}</div>
+        <div class="weight-row">
+          <input type="range" min="0" max="10" step="1" value="${weights[c.id]}"
+            oninput="weights['${c.id}']=+this.value;document.getElementById('wv-${c.id}').textContent=this.value;saveWeights()">
+          <span class="crit-wval" id="wv-${c.id}">${weights[c.id]}</span>
+        </div>`;
+      if(c.type==='scale5'){
+        html+=`<div class="arch-tiers">${[1,2,3,4,5].map(n=>`<div class="arch-tier"><span>${n}</span>${esc(c.labels[n])}</div>`).join('')}</div>`;
+      } else if(c.noC){
+        html+=`<div class="tiers one-col"><div class="tier tier-b"><span>Compromise (50%)</span>${esc(c.b)}</div></div>`;
+      } else if(c.hasD){
+        html+=`<div class="tiers"><div class="tier tier-b"><span>Compromise 1 (50%)</span>${esc(c.b)}</div><div class="tier tier-c"><span>Compromise 2 (25%)</span>${esc(c.c)}</div></div>`;
+        html+=`<div class="tiers one-col" style="margin-top:6px"><div class="tier tier-c"><span>Zero score (0%)</span>${esc(c.d)}</div></div>`;
+      } else {
+        html+=`<div class="tiers"><div class="tier tier-b"><span>Compromise 1 (50%)</span>${esc(c.b)}</div><div class="tier tier-c"><span>Compromise 2 (25%)</span>${esc(c.c)}</div></div>`;
+      }
+      if(c.note)html+=`<div style="font-size:11px;color:#aaa;margin-top:4px">${esc(c.note)}</div>`;
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('tab-weights').innerHTML=html;
 }
 
-// ─── NAVIGATION ────────────────────────────────────────────────────────────
-function showPanel(name) {
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.getElementById('panel-'+name).classList.add('active');
-  const tabs={criteria:0,listings:1,add:2,data:3};
-  document.querySelectorAll('.tab')[tabs[name]]?.classList.add('active');
-  if(name==='listings') renderListings();
-  if(name==='data') renderDataTable();
+function renderInsights(){
+  const el=document.getElementById('tab-insights');
+  const rated=listings.filter(l=>l.gut!==null&&l.gut!==undefined);
+  if(rated.length<2){
+    el.innerHTML=`<div class="empty">Rate at least 2 listings with a gut score (in the Listings tab) to get insights.</div>`;
+    return;
+  }
+
+  const gutNorm=rated.map(l=>((l.gut-1)/9)*100);
+  const calcScores=rated.map(l=>getScore(l)||0);
+
+  function corr(xs,ys){
+    const n=xs.length;
+    const mx=xs.reduce((a,b)=>a+b,0)/n;
+    const my=ys.reduce((a,b)=>a+b,0)/n;
+    const num=xs.reduce((s,x,i)=>s+(x-mx)*(ys[i]-my),0);
+    const den=Math.sqrt(xs.reduce((s,x)=>s+(x-mx)**2,0)*ys.reduce((s,y)=>s+(y-my)**2,0));
+    return den===0?0:num/den;
+  }
+
+  const overallCorr=corr(gutNorm,calcScores);
+  const overallGap=rated.map((l,i)=>gutNorm[i]-calcScores[i]);
+
+  const critStats=CRITERIA.map(c=>{
+    const pts=rated.map(l=>{
+      const p=pointsEarned(l.scores[c.id],c);
+      return p===null?null:p/weights[c.id];
+    });
+    const paired=pts.map((p,i)=>[p,gutNorm[i]]).filter(([p])=>p!==null);
+    if(paired.length<2)return{...c,r:null,weight:weights[c.id],avgPts:null};
+    const r=corr(paired.map(p=>p[0]),paired.map(p=>p[1]));
+    const avgPts=paired.reduce((s,p)=>s+p[0],0)/paired.length;
+    return{...c,r,weight:weights[c.id],avgPts};
+  }).filter(x=>x.r!==null).sort((a,b)=>b.r-a.r);
+
+  const overWeighted=critStats.filter(c=>c.weight>=6&&c.r<0.2).sort((a,b)=>a.r-b.r).slice(0,3);
+  const underWeighted=critStats.filter(c=>c.weight<=5&&c.r>0.5).sort((a,b)=>b.r-a.r).slice(0,3);
+
+  const gaps=rated.map((l,i)=>({name:l.name,gut:gutNorm[i],calc:calcScores[i],gap:gutNorm[i]-calcScores[i],gutRaw:l.gut}))
+    .sort((a,b)=>Math.abs(b.gap)-Math.abs(a.gap));
+
+  let html=`<div style="margin-bottom:1.5rem">
+    <div style="font-size:14px;font-weight:500;margin-bottom:4px">Overall alignment</div>
+    <div style="font-size:13px;color:#666;margin-bottom:10px;line-height:1.5">Based on ${rated.length} rated listing${rated.length!==1?'s':''}. Model vs. gut correlation: <strong>${(overallCorr*100).toFixed(0)}%</strong>${overallCorr>0.7?' — strong alignment':overallCorr>0.4?' — moderate alignment':' — weak alignment, adjustments recommended'}.</div>
+  </div>`;
+
+  html+=`<div style="margin-bottom:1.5rem">
+    <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">Gut vs calculated score</div>`;
+  const gapSorted=[...gaps].sort((a,b)=>b.gut-a.gut);
+  gapSorted.forEach(l=>{
+    const gutW=Math.round(l.gut);
+    const calcW=Math.round(l.calc);
+    const gutColor='#2563eb';
+    const calcColor=l.calc>=70?'#1D9E75':l.calc>=45?'#BA7517':'#E24B4A';
+    const name=l.name.split(',')[0];
+    html+=`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span style="color:#1a1a1a;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">${esc(name)}</span>
+        <span style="font-size:11px;color:#888;flex-shrink:0">gut ${l.gutRaw}/10 · calc ${calcW}%</span>
+      </div>
+      <div style="position:relative;height:8px;background:#f0f0f0;border-radius:4px;margin-bottom:2px">
+        <div style="position:absolute;left:0;top:0;height:8px;border-radius:4px;background:${gutColor};opacity:.35;width:${gutW}%"></div>
+        <div style="position:absolute;left:0;top:0;height:8px;border-radius:4px;background:${calcColor};width:${calcW}%"></div>
+      </div>
+      <div style="display:flex;gap:8px;font-size:10px;color:#aaa">
+        <span><span style="color:${gutColor};opacity:.7">■</span> gut</span>
+        <span><span style="color:${calcColor}">■</span> calculated</span>
+        ${Math.abs(l.gap)>15?`<span style="color:${l.gap>0?'#2563eb':'#BA7517'}">${l.gap>0?'↑ you rate higher':'↓ you rate lower'} than model</span>`:''}
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+
+  html+=`<div style="margin-bottom:1.5rem">
+    <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">How well each criterion predicts your gut score</div>
+    <div style="font-size:11px;color:#aaa;margin-bottom:10px">Longer bar = stronger predictor of what you actually like. Color = current weight.</div>`;
+  const maxCorr=Math.max(...critStats.map(x=>Math.abs(x.r)),0.01);
+  critStats.forEach(cs=>{
+    const pct=Math.round((cs.r/maxCorr)*100);
+    const barW=Math.max(0,pct);
+    const bColor=cs.r>=0.5?'#1D9E75':cs.r>=0.2?'#BA7517':'#E24B4A';
+    const weightColor=cs.weight>=7?'#1a1a1a':cs.weight>=4?'#888':'#bbb';
+    html+=`<div style="margin-bottom:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:11px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%">${cs.label}</span>
+        <span style="font-size:10px;color:${weightColor};flex-shrink:0">weight ${cs.weight} · r=${cs.r>=0?('+'+cs.r.toFixed(2)):cs.r.toFixed(2)}</span>
+      </div>
+      <div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden">
+        <div style="height:6px;border-radius:3px;background:${bColor};width:${barW}%"></div>
+      </div>
+    </div>`;
+  });
+  html+='</div>';
+
+  if(overWeighted.length||underWeighted.length){
+    html+=`<div style="background:#f9f9f9;border:1px solid #eee;border-radius:12px;padding:14px;margin-bottom:1rem">
+      <div style="font-size:13px;font-weight:500;margin-bottom:10px">Suggested weight adjustments</div>`;
+    if(overWeighted.length){
+      html+=`<div style="font-size:12px;font-weight:500;color:#BA7517;margin-bottom:6px">Consider reducing weight:</div>`;
+      overWeighted.forEach(cs=>{
+        html+=`<div style="font-size:12px;color:#666;margin-bottom:5px;padding-left:10px">
+          <strong>${cs.label}</strong> (currently ${cs.weight}) — low correlation with your ratings (r=${cs.r.toFixed(2)}). You may care less about this than you thought.
+        </div>`;
+      });
+    }
+    if(underWeighted.length){
+      html+=`<div style="font-size:12px;font-weight:500;color:#1D9E75;margin-top:8px;margin-bottom:6px">Consider increasing weight:</div>`;
+      underWeighted.forEach(cs=>{
+        html+=`<div style="font-size:12px;color:#666;margin-bottom:5px;padding-left:10px">
+          <strong>${cs.label}</strong> (currently ${cs.weight}) — strong predictor of what you like (r=+${cs.r.toFixed(2)}). This may matter more than your current weight suggests.
+        </div>`;
+      });
+    }
+    html+=`<div style="font-size:11px;color:#aaa;margin-top:10px">Note: these suggestions are based on only ${rated.length} rated listings. Rate more listings for better accuracy.</div>
+    </div>`;
+  }
+
+  el.innerHTML=html;
 }
 
-// ─── INIT ──────────────────────────────────────────────────────────────────
-renderCriteria();
-loadData();
+function jsonPanelHTML(){
+  if(!lastImportJson)return'';
+  let count=0;
+  try{const d=JSON.parse(lastImportJson.replace(/```json|```/g,'').trim());count=Array.isArray(d)?d.length:1;}catch(e){}
+  return`<div class="json-panel">
+    <div class="json-panel-header" onclick="toggleJsonPanel()">
+      <div>
+        <div class="json-panel-title">Last import JSON</div>
+        <div class="json-panel-meta">${count} listing${count!==1?'s':''} · tap to expand</div>
+      </div>
+      <span style="font-size:14px;color:#aaa" id="json-panel-chevron">▼</span>
+    </div>
+    <div class="json-panel-body" id="json-panel-body">
+      <button class="json-copy-btn" onclick="copyLastJson()">Copy to clipboard</button>
+      <div class="json-display" id="json-display">${esc(lastImportJson)}</div>
+      <div style="font-size:11px;color:#aaa;margin-top:6px">Paste this into the import box above to reload these listings.</div>
+    </div>
+  </div>`;
+}
+
+function toggleJsonPanel(){
+  jsonPanelOpen=!jsonPanelOpen;
+  const body=document.getElementById('json-panel-body');
+  const chev=document.getElementById('json-panel-chevron');
+  if(body){body.classList.toggle('open',jsonPanelOpen);}
+  if(chev){chev.textContent=jsonPanelOpen?'▲':'▼';}
+}
+
+function copyLastJson(){
+  if(!lastImportJson)return;
+  navigator.clipboard.writeText(lastImportJson).then(()=>{
+    const btn=document.querySelector('.json-copy-btn');
+    if(btn){btn.textContent='Copied!';setTimeout(()=>{btn.textContent='Copy to clipboard';},2000);}
+  }).catch(()=>{
+    const el=document.getElementById('json-display');
+    if(el){const range=document.createRange();range.selectNodeContents(el);const sel=window.getSelection();sel.removeAllRanges();sel.addRange(range);}
+  });
+}
+
+
+const TAB_ORDER=['listings','map','weights','insights','location','data'];
+const TAB_LABELS={listings:'Listings',map:'Map',weights:'Weights',insights:'Insights',location:'Locations',data:'Data'};
+
+function tabNeedsAttention(t){
+  if(t==='listings'){
+    return listings.some(l=>l.gut===null||l.gut===undefined);
+  }
+  if(t==='location'){
+    syncLocPrefs();
+    return Object.values(locPrefs).some(p=>p.rating===null);
+  }
+  return false;
+}
+
+function renderTabs(){
+  const container=document.getElementById('main-tabs');
+  if(!container)return;
+  container.innerHTML=TAB_ORDER.map(t=>{
+    const dot=tabNeedsAttention(t)?'<span class="tab-dot"></span>':'';
+    return `<button class="tab${activeTab===t?' active':''}" onclick="showTab('${t}')">${TAB_LABELS[t]}${dot}</button>`;
+  }).join('');
+}
+
+function renderLocation(){
+  syncLocPrefs();
+  const towns=Object.keys(locPrefs).sort((a,b)=>a.localeCompare(b));
+  const ratedCount=towns.filter(t=>locPrefs[t].rating!==null).length;
+
+  let html=`<div style="margin-bottom:1rem">
+    <div style="font-size:14px;font-weight:500;margin-bottom:4px">Location preferences</div>
+    <div style="font-size:13px;color:#666;line-height:1.5;margin-bottom:12px">Rate each town or neighborhood 1–5. This adds a weighted location score to every listing from that area. Towns are detected automatically from your listing names.</div>
+  </div>`;
+
+  html+=`<div class="loc-weight-row" style="border-top:none;margin-top:0;padding-top:0;margin-bottom:16px;background:#f9f9f9;border-radius:12px;padding:12px 14px;border:1px solid #eee">
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:500">Location preference weight</div>
+      <div style="font-size:11px;color:#aaa;margin-top:2px">How much your town ratings influence the overall score</div>
+    </div>
+    <input type="range" min="0" max="10" step="1" value="${locWeight}" style="width:120px;cursor:pointer"
+      oninput="locWeight=+this.value;document.getElementById('loc-wt-val').textContent=this.value;saveLocWeight(this.value);renderListings()">
+    <span id="loc-wt-val" style="font-size:13px;font-weight:500;color:#1a1a1a;min-width:20px;text-align:right">${locWeight}</span>
+  </div>`;
+
+  if(!towns.length){
+    html+='<div class="empty">Import some listings first — towns will appear here automatically.</div>';
+  } else {
+    html+=`<div style="font-size:11px;color:#aaa;margin-bottom:10px">${ratedCount} of ${towns.length} rated</div>`;
+    towns.forEach(town=>{
+      const pref=locPrefs[town];
+      const r=pref.rating||0;
+      const count=listings.filter(l=>extractTown(l.name)===town).length;
+      const ratingColor=r>=4?'#1D9E75':r>=3?'#BA7517':r>=1?'#E24B4A':'#aaa';
+      const ratingLabel=r===5?'Love it':r===4?'Really like':r===3?'OK':r===2?'Not ideal':r===1?'Avoid':'Not rated';
+      html+=`<div class="loc-card">
+        <div style="flex:1;min-width:0">
+          <div class="loc-name">${esc(town)}</div>
+          <div class="loc-sub">${count} listing${count!==1?'s':''} · <span style="color:${ratingColor}">${ratingLabel}</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${r===0?'<span class="tab-dot" style="margin:0"></span>':''}
+          <div class="loc-stars">
+            ${[1,2,3,4,5].map(n=>`<button class="loc-star${r>=n?' filled':''}" onclick="setLocRating('${esc(town)}',${n})">${r>=n?'★':'☆'}</button>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  html+=`<div style="font-size:11px;color:#aaa;margin-top:16px;line-height:1.5">
+    Tip: Rate 5 for neighborhoods you'd be excited to live in, 3 for acceptable, 1 for places you'd actively avoid. Unrated towns don't affect the score.
+  </div>`;
+
+  document.getElementById('tab-location').innerHTML=html;
+}
+
+function setLocRating(town,val){
+  if(!locPrefs[town])locPrefs[town]={name:town,rating:null};
+  locPrefs[town].rating=locPrefs[town].rating===val?null:val;
+  saveLocPrefs();
+  renderTabs();
+  renderLocation();
+  if(activeTab==='listings')renderListings();
+}
+
+function renderData(){
+  document.getElementById('tab-data').innerHTML=`
+    <div class="import-box" style="margin-bottom:12px">
+      <h3>Import listings</h3>
+      <p style="margin-bottom:12px">Two ways to add listings:</p>
+      <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Step 1 — Upload saved HTML pages</div>
+      <p>Save a Redfin or Zillow page as HTML in your browser, then upload it here. Upload multiple files at once for bulk import.</p>
+      <div style="position:relative;border:1px dashed #ccc;border-radius:10px;padding:14px;text-align:center;margin-top:8px;cursor:pointer;background:#fff" id="upload-zone">
+        <input type="file" accept=".html,.htm" multiple onchange="handleHtmlUpload(this)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+        <div style="font-size:13px;color:#888" id="upload-label">Tap to select .html files</div>
+      </div>
+      <div id="upload-file-list" style="margin-top:8px"></div>
+      <div style="font-size:12px;font-weight:500;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-top:16px;margin-bottom:6px">Step 2 — Send to Claude &amp; paste JSON</div>
+      <p>Upload the same HTML files to Claude in this chat. Claude will score them and give you a JSON block to paste below.</p>
+      <textarea class="json-input" id="import-json" rows="5" placeholder='Paste JSON from Claude here…'></textarea>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="importScores()">Import listings</button>
+        <button class="btn btn-sm" onclick="clearAllListings()" style="color:#c0392b;border-color:#fca5a5">Clear all listings</button>
+        <div class="import-status" id="import-status"></div>
+      </div>
+    </div>
+    ${jsonPanelHTML()}
+    <div class="import-box" style="margin-top:12px">
+      <h3>Save &amp; restore your data</h3>
+      <p>Export your listings and scores to a file so you can reload them into any future version of this app.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-sm" onclick="exportData()">Export data to file</button>
+        <label class="btn btn-sm" style="cursor:pointer">Load from file<input type="file" accept=".json" onchange="importDataFile(this)" style="display:none"></label>
+      </div>
+      <div id="data-status" style="font-size:13px;margin-top:8px;min-height:18px;color:#888"></div>
+    </div>`;
+}
+
+function clearAllListings(){
+  if(!confirm('Delete all listings? This cannot be undone.'))return;
+  listings=[];
+  saveListings();
+  renderTabs();
+  renderListings();
+  const el=document.getElementById('import-status');
+  if(el){el.className='import-status ok';el.textContent='All listings cleared.';}
+}
+
+function handleHtmlUpload(input){
+  const files=Array.from(input.files);
+  if(!files.length)return;
+  const listEl=document.getElementById('upload-file-list');
+  const zoneEl=document.getElementById('upload-zone');
+  const labelEl=document.getElementById('upload-label');
+  labelEl.textContent=`${files.length} file${files.length!==1?'s':''} selected`;
+  zoneEl.style.borderStyle='solid';zoneEl.style.borderColor='#97C459';zoneEl.style.background='#f6fbef';
+  let html='';
+  let pending=files.length;
+  const results=[];
+  files.forEach((file,i)=>{
+    results.push({name:file.name,text:''});
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const tmp=document.createElement('div');
+      tmp.innerHTML=e.target.result;
+      tmp.querySelectorAll('script,style,noscript,nav,footer,header,svg,iframe').forEach(el=>el.remove());
+      const raw=(tmp.innerText||tmp.textContent||'').replace(/\s+/g,' ').trim();
+      results[i].text=raw.slice(0,8000);
+      results[i].words=Math.round(raw.length/5);
+      pending--;
+      if(pending===0){
+        let listHtml='';
+        results.forEach(r=>{
+          listHtml+=`<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#444;padding:4px 0;border-bottom:1px solid #f0f0f0">
+            <span style="color:#1D9E75;font-size:14px">✓</span>
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.name)}</span>
+            <span style="color:#aaa;flex-shrink:0">~${r.words} words</span>
+          </div>`;
+        });
+        document.getElementById('upload-file-list').innerHTML=listHtml;
+        window._uploadedListingTexts=results;
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function importScores(){
+  const raw=document.getElementById('import-json').value.trim();
+  const el=document.getElementById('import-status');
+  if(!raw){el.className='import-status err';el.textContent='Paste JSON first.';return;}
+  let data;
+  try{data=JSON.parse(raw.replace(/```json|```/g,'').trim());}catch(e){el.className='import-status err';el.textContent='Invalid JSON.';return;}
+  if(!Array.isArray(data))data=[data];
+  let added=0,updated=0;
+  data.forEach(item=>{
+    const scores={};CRITERIA.forEach(c=>scores[c.id]=c.type==='scale5'?0:'unknown');
+    if(item.scores)Object.assign(scores,item.scores);
+    const idx=listings.findIndex(l=>l.name&&item.name&&l.name.toLowerCase()===item.name.toLowerCase());
+    if(idx>=0){listings[idx].scores=scores;if(item.url)listings[idx].url=item.url;updated++;}
+    else{listings.push(newListing({name:item.name||'',url:item.url||'',scores}));added++;}
+  });
+  const KNOWN_COORDS = {
+    '110 melville ave #1, dorchester ma': [42.3078, -71.0724],
+    '11 wyman st unit 2b, jamaica plain ma': [42.3189, -71.1063],
+    'chablis plan, walpole ma': [42.1487, -71.2495],
+    '24 coach rd, south easton ma': [42.0201, -71.0867],
+    '12 jasper ln #12, randolph ma': [42.1668, -71.0445],
+    '7 mildred st, hull ma': [42.2990, -70.8937],
+    '90 florian st, jamaica plain ma': [42.3119, -71.1198],
+    '38 saint gregory #38, boston ma': [42.2962, -71.0695],
+  };
+  listings.forEach((l,i) => {
+    if (!l.lat) {
+      const key = l.name.toLowerCase().trim();
+      if (KNOWN_COORDS[key]) { listings[i].lat = KNOWN_COORDS[key][0]; listings[i].lng = KNOWN_COORDS[key][1]; }
+    }
+  });
+  saveListings();
+  lastImportJson=raw;
+  saveLastJson(raw);
+  el.className='import-status ok';el.textContent=`Imported ${added} new, updated ${updated} existing.`;
+  renderTabs();
+  renderListings();
+}
+
+function renderMatrix(){
+  if(!listings.length){document.getElementById('tab-matrix').innerHTML='<div class="empty">Import some listings first to see the matrix.</div>';return;}
+  const sorted=[...listings].map((l,i)=>({...l,_i:i,sc:getScore(l)})).sort((a,b)=>(b.sc||0)-(a.sc||0));
+  const groups=[...new Set(CRITERIA.map(c=>c.group))];
+  const n = sorted.length;
+  const factorPct = Math.round(140 / 7 * 100) / 100;
+  const listingPct = ((100 - factorPct) / n).toFixed(2);
+  const colDefs = `<col style="width:${factorPct}%">` + sorted.map(()=>`<col style="width:${listingPct}%">`).join('');
+  let html=`<div class="mx-wrap"><table class="mx-table"><colgroup>${colDefs}</colgroup><thead><tr><th class="mx-corner">Criterion</th>`;
+  sorted.forEach(l=>{const parts=l.name.split(/[,\n]/);html+=`<th class="mx-listing-th">${esc(parts[0]||l.name)}<br><span style="font-size:10px;color:#888;font-weight:400">${esc((parts[1]||'').trim())}</span></th>`;});
+  html+=`</tr></thead><tbody>`;
+  groups.forEach(g=>{
+    html+=`<tr class="mx-group-row"><td colspan="${sorted.length+1}">${g}</td></tr>`;
+    CRITERIA.filter(c=>c.group===g).forEach(c=>{
+      const maxPts=weights[c.id];
+      html+=`<tr><td class="mx-factor">${c.label}<span class="mx-wt">(${maxPts})</span></td>`;
+      sorted.forEach(l=>{
+        const s=l.scores[c.id];const pts=pointsEarned(s,c);
+        const col=cellBg(pts,maxPts,s==='d'&&c.hasD);
+        const disp=pts===null?'—':pts===Math.round(pts)?String(Math.round(pts)):pts.toFixed(1);
+        html+=`<td class="mx-cell" style="background:${col.bg};color:${col.text}">${disp}</td>`;
+      });
+      html+='</tr>';
+    });
+  });
+  html+=`<tr><td class="mx-subrow-label">Points scored / max scored</td>`;
+  sorted.forEach(l=>{let t=0,m=0;CRITERIA.forEach(c=>{const p=pointsEarned(l.scores[c.id],c);if(p!==null){t+=p;m+=weights[c.id];}});html+=`<td class="mx-subrow-cell">${Math.round(t)} / ${Math.round(m)}</td>`;});
+  html+=`</tr><tr><td class="mx-total-label">Overall score</td>`;
+  sorted.forEach(l=>{const sc=getScore(l);const col=totalBg(sc);html+=`<td class="mx-total-cell" style="background:${col.bg};color:${col.text}">${sc!==null?sc+'%':'—'}</td>`;});
+  html+=`</tr></tbody></table><div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:#EAF3DE"></div>Full pts</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#E1F5EE"></div>65–99%</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#FAEEDA"></div>40–64%</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#FAECE7"></div>15–39%</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#FCEBEB"></div>0–14%</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:#f9f9f9;border:1px solid #eee"></div>Unknown</div>
+  </div></div>`;
+  document.getElementById('tab-matrix').innerHTML=html;
+}
+
+let listingsFilterUnscored=false;
+let listingsCollapsed={};
+
+function renderDashboard(){renderListings();}
+
+function renderListings(){
+  const container=document.getElementById('tab-listings');
+  const indexed=listings.map((l,i)=>({l,i}));
+  const sorted=[...indexed].sort((a,b)=>(getScore(b.l)||0)-(getScore(a.l)||0));
+  const filtered=listingsFilterUnscored
+    ? sorted.filter(({l})=>l.gut===null||l.gut===undefined)
+    : sorted;
+  const unratedCount=listings.filter(l=>l.gut===null||l.gut===undefined).length;
+
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+    <span style="font-size:13px;color:#888">${listings.length} listing${listings.length!==1?'s':''}</span>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#444;cursor:pointer;-webkit-tap-highlight-color:transparent">
+        <input type="checkbox" ${listingsFilterUnscored?'checked':''} onchange="listingsFilterUnscored=this.checked;renderListings()" style="width:16px;height:16px;cursor:pointer">
+        No gut score only${unratedCount?` <span style="color:#E24B4A">(${unratedCount})</span>`:''}
+      </label>
+      <button class="btn btn-sm" onclick="toggleAllListings()">Collapse all</button>
+      <button class="btn" onclick="addListing()">+ Add listing</button>
+    </div>
+  </div>`;
+
+  if(!filtered.length){
+    html+=`<div class="empty">${listingsFilterUnscored?'All listings have a gut score set.':'No listings yet. Go to the Data tab to import listings.'}</div>`;
+  }
+
+  filtered.forEach(({l,i:li},rank)=>{
+    const sc=getScore(l);
+    const scoredN=CRITERIA.filter(c=>{const v=l.scores[c.id];return v&&v!=='unknown'&&v!==0;}).length;
+    const gut=l.gut!==null&&l.gut!==undefined?l.gut:null;
+    const collapsed=listingsCollapsed[li]===undefined?true:!!listingsCollapsed[li];
+
+    html+=`<div class="${collapsed?'lcard':'card'}" id="lc-${li}" style="${collapsed?'cursor:default':''}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="rank-num${rank===0?' top':''}" style="flex-shrink:0">${rank+1}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%">${esc(l.name)||'Unnamed'}</span>
+            ${badge(sc)}
+            ${gut!==null?`<span id="gut-hdr-${li}" style="font-size:12px;font-weight:500;background:#f5f5f5;padding:2px 8px;border-radius:6px">gut: ${gut}/10</span>`:`<span id="gut-hdr-${li}" style="display:none;font-size:12px;font-weight:500;background:#f5f5f5;padding:2px 8px;border-radius:6px"></span>`}
+          </div>
+          ${l.url?`<div style="margin-top:2px"><a href="${esc(l.url)}" target="_blank" style="font-size:12px;font-weight:500;color:#2563eb;text-decoration:none;white-space:nowrap">View on Redfin ↗</a></div>`:''}
+          <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+            <div class="bar-bg"><div class="bar-fill" style="width:${sc||0}%;background:${sc?barColor(sc):'#ddd'}"></div></div>
+            <span style="font-size:11px;color:#aaa;white-space:nowrap">${scoredN}/${CRITERIA.length} criteria filled</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <button onclick="listingsCollapsed[${li}]=!listingsCollapsed[${li}];renderListings()" style="background:none;border:none;cursor:pointer;font-size:14px;color:#aaa;padding:4px;-webkit-tap-highlight-color:transparent">${collapsed?'▼':'▲'}</button>
+          <button class="del-btn" onclick="delListing(${li})" style="padding:4px 6px">✕</button>
+        </div>
+      </div>`;
+
+    if(!collapsed){
+      html+=`<div style="padding:10px 0;border-top:1px solid ${gut===null?'#E24B4A44':'#f0f0f0'};border-bottom:1px solid #f0f0f0;margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:13px;font-weight:500">My gut score</span>
+            ${gut===null?'<span class="tab-dot" style="margin-left:0"></span>':''}
+          </div>
+          <span style="font-size:13px;font-weight:500;color:${gut===null?'#E24B4A':'#1a1a1a'}" id="gut-val-${li}">${gut!==null?gut+'/10':'not set'}</span>
+        </div>
+        <input type="range" min="1" max="10" step="1" value="${gut||5}"
+          style="width:100%;height:36px;cursor:pointer"
+          oninput="listings[${li}].gut=+this.value;document.getElementById('gut-val-${li}').textContent=this.value+'/10';const hb=document.getElementById('gut-hdr-${li}');if(hb){hb.textContent='gut: '+this.value+'/10';hb.style.display='';}saveListings();renderTabs();if(listingsFilterUnscored){clearTimeout(window._gutFilterTimer);window._gutFilterTimer=setTimeout(()=>renderListings(),3000);}else ddb()">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#bbb;margin-top:2px"><span>1 — not for me</span><span>10 — perfect</span></div>
+      </div>`;
+
+      html+=`<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+        <svg width="13" height="13" viewBox="0 0 12 12" fill="none" style="flex-shrink:0"><path d="M6 1a3.5 3.5 0 0 1 3.5 3.5C9.5 7.5 6 11 6 11S2.5 7.5 2.5 4.5A3.5 3.5 0 0 1 6 1z" stroke="#aaa" stroke-width="1" fill="none"/><circle cx="6" cy="4.5" r="1" fill="#aaa"/></svg>
+        <input class="url-input" placeholder="Paste Zillow or Redfin URL…" value="${esc(l.url||'')}" oninput="listings[${li}].url=this.value;saveListings()">
+      </div>`;
+
+      const groups=[...new Set(CRITERIA.map(c=>c.group))];
+      groups.forEach(g=>{
+        html+=`<div class="subsection-label">${g}</div><div class="crit-grid">`;
+        CRITERIA.filter(c=>c.group===g).forEach(c=>{
+          if(c.type==='scale5'){
+            const v=l.scores[c.id]||0;
+            html+=`<div class="arch-cell" style="grid-column:1/-1">
+              <div class="arch-label">${c.label}</div>
+              <div class="arch-stars">`;
+            [1,2,3,4,5].forEach(n=>{
+              html+=`<button class="star-btn${v>=n?' filled':''}" onclick="doStar(${li},'${c.id}',${n})">${v>=n?'★':'☆'}</button>`;
+            });
+            html+=`${v>0?`<span style="font-size:12px;color:#888;margin-left:8px;align-self:center">${v}/5</span>`:''}
+              </div>
+              <div class="arch-desc">${esc(v>0?c.labels[v]:'tap a star to rate')}</div>
+            </div>`;
+          } else {
+            const noC=!!c.noC;
+            const s=l.scores[c.id]||'unknown';
+            const dotCls=s==='a'?' dot-a':s==='b'?' dot-b':s==='c'?' dot-c':s==='d'?' dot-d':'';
+            const dotLbl=s==='a'?'✓':s==='b'?'~':s==='c'?'✗':s==='d'?'✕':'';
+            const tierText=s==='a'?c.a:s==='b'?c.b:s==='c'?c.c:s==='d'&&c.d?c.d:'tap to score';
+            const tierCls=s==='a'?' t-a':s==='b'?' t-b':s==='c'?' t-c':s==='d'?' t-d':'';
+            html+=`<button class="crit-cell" onclick="doCycle(${li},'${c.id}',${noC})">
+              <div class="cell-top"><div class="dot${dotCls}">${dotLbl}</div><span class="cell-label">${esc(c.label)}</span></div>
+              <div class="cell-tier${tierCls}">${esc(tierText)}</div>
+            </button>`;
+          }
+        });
+        html+='</div>';
+      });
+
+      html+=`<textarea class="notes-input" rows="2" placeholder="Notes…" oninput="listings[${li}].notes=this.value;saveListings()">${esc(l.notes||'')}</textarea>`;
+    }
+
+    html+='</div>';
+  });
+
+  container.innerHTML=html;
+}
+
+function toggleAllListings(){
+  const anyExpanded=Object.keys(listingsCollapsed).length < listings.length ||
+    listings.some((_,i)=>!listingsCollapsed[i]);
+  listings.forEach((_,i)=>{listingsCollapsed[i]=anyExpanded;});
+  renderListings();
+}
+
+function doCycle(li,cid,noC){
+  const crit=CRITERIA.find(x=>x.id===cid);
+  const states=noC?['unknown','a','b']:crit&&crit.hasD?['unknown','a','b','c','d']:['unknown','a','b','c'];
+  const cur=listings[li].scores[cid]||'unknown';
+  listings[li].scores[cid]=states[(states.indexOf(cur)+1)%states.length];
+  saveListings();renderTabs();renderListings();
+}
+
+function doStar(li,cid,val){
+  listings[li].scores[cid]=listings[li].scores[cid]===val?0:val;
+  saveListings();renderTabs();renderListings();
+}
+
+function listingsClickHandler(){}
+function listingsInputHandler(){}
+
+let ddt=null;
+function ddb(){clearTimeout(ddt);ddt=setTimeout(()=>{if(activeTab==='listings')renderListings();},300);}
+function addListing(){listings.push(newListing());saveListings();renderListings();}
+function delListing(i){listings.splice(i,1);expanded=null;saveListings();renderListings();}
+function cycleScore(li,id,states){
+  const cur=listings[li].scores[id]||'unknown';
+  listings[li].scores[id]=states[(states.indexOf(cur)+1)%states.length];
+  saveListings();renderListings();
+}
+function setS5(li,id,v){
+  listings[li].scores[id]=listings[li].scores[id]===v?0:v;
+  saveListings();renderListings();
+}
+function goEdit(idx){
+  listingsCollapsed[idx]=false;
+  showTab('listings');
+  setTimeout(()=>{const el=document.getElementById('lc-'+idx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100);
+}
+loadAllState().then(()=>{
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('app-root').style.display='';
+  renderTabs();
+  renderListings();
+});
 </script>
 </body>
 </html>
