@@ -660,9 +660,9 @@ def main():
             print("  Found cookies in Gist.")
 
     if not args.sync_app and not args.dry_run:
-        token = os.environ.get("GITHUB_TOKEN")
+        token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GIST_TOKEN")
         if not token:
-            print("Error: set GITHUB_TOKEN environment variable, use --sync-app, or use --dry-run")
+            print("Error: set GITHUB_TOKEN or GIST_TOKEN environment variable, use --sync-app, or use --dry-run")
             sys.exit(1)
     else:
         token = None

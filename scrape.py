@@ -613,9 +613,9 @@ def main():
     parser.add_argument("--debug", action="store_true", help="Show raw response info")
     args = parser.parse_args()
 
-    token = os.environ.get("GITHUB_TOKEN") if not args.dry_run else None
+    token = (os.environ.get("GITHUB_TOKEN") or os.environ.get("GIST_TOKEN")) if not args.dry_run else None
     if not args.dry_run and not token:
-        print("Error: set GITHUB_TOKEN environment variable (or use --dry-run)")
+        print("Error: set GITHUB_TOKEN or GIST_TOKEN environment variable (or use --dry-run)")
         sys.exit(1)
 
     # Load current data.json
