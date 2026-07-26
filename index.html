@@ -59,6 +59,9 @@ input[type=range]{width:100%;accent-color:#2563eb}
 .nbhd-badge.tier1{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
 .nbhd-badge.tier2{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
 .nbhd-badge.other{background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+.status-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-left:6px}
+.status-badge.pending{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.status-badge.under_contract{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
 .nbhd-bar-wrap{margin-top:8px}
 .nbhd-bar-label{font-size:11px;color:#888;margin-bottom:3px;display:flex;justify-content:space-between}
 .nbhd-bar-track{height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden}
@@ -564,6 +567,7 @@ function renderListings() {
           <div class="listing-address">${l.address||'Untitled listing'}</div>
           <div class="listing-meta">
             <span>${l.price||'—'}</span>
+            ${l.status==='pending'?'<span class="status-badge pending">⏳ Pending</span>':l.status==='under_contract'?'<span class="status-badge under_contract">🔒 Under Contract</span>':''}
             ${l.url?`<a href="${l.url}" target="_blank" onclick="event.stopPropagation()" style="color:#2563eb;text-decoration:none">View listing →</a>`:''}
             <span class="nbhd-badge ${tierBadgeClass}">${tierEmoji} ${nbhd.label}</span>
           </div>
