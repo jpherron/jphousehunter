@@ -1269,7 +1269,6 @@ loadAllState().then(async()=>{
       if(r.ok){
         const d=await r.json();
         listings=Array.isArray(d)?d:(d.listings||[]);
-        saveListings();
       }
     }catch(e){}
   }
