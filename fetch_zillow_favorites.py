@@ -391,32 +391,39 @@ def normalize_zillow_home(raw: dict) -> dict | None:
 
 # ─── SCORING ──────────────────────────────────────────────────────────────────
 
-def _auto_score(price_num: int, sqft: int | None, beds: int | None, year: int | None) -> dict:
-    scores = {k: None for k in [
-        "price", "property_type", "t_walk", "safety", "sqft", "beds", "yard",
-        "layout", "condition", "roof", "hvac", "electrical", "plumbing",
-        "windows", "architecture", "natural_light", "neighborhood_feel",
-        "historic_age", "garage_basement", "parking", "restaurants_walk",
-        "nature_walk",
-    ]}
-    if price_num <= 950_000:      scores["price"] = 0
-    elif price_num <= 1_000_000:  scores["price"] = 1
-    else:                         scores["price"] = 2
+APP_CRITERIA_IDS = [
+    "t_stop","portsmouth","walkable","restaurants","nature",
+    "price","sqft","type","bedrooms","ensuite","ceiling",
+    "storage","workshop","fenced","move_in","ac",
+    "sys_roof","sys_elec","sys_plumb","sys_siding","sys_windows","sys_hvac",
+    "pre1940","hoa","arch","light",
+]
 
+def _auto_score(price_num: int, sqft: int | None, beds: int | None, year: int | None) -> dict:
+    scores = {k: None for k in APP_CRITERIA_IDS}
+
+    # price: 0=<$800k, 1=$800-850k, 2=$850-900k, 3=$900k+
+    if price_num < 800_000:    scores["price"] = 0
+    elif price_num < 850_000:  scores["price"] = 1
+    elif price_num < 900_000:  scores["price"] = 2
+    else:                      scores["price"] = 3
+
+    # sqft: 0=1400+, 1=1200-1400, 2=under 1200
     if sqft:
-        if 1500 <= sqft <= 2500:                              scores["sqft"] = 0
-        elif (1300 <= sqft < 1500) or (2500 < sqft <= 2800): scores["sqft"] = 1
-        elif 1100 <= sqft < 1300:                             scores["sqft"] = 2
-        else:                                                 scores["sqft"] = 3
+        if sqft >= 1400:   scores["sqft"] = 0
+        elif sqft >= 1200: scores["sqft"] = 1
+        else:              scores["sqft"] = 2
+
+    # bedrooms: 0=3bed or 2+office, 1=2bed
     if beds:
-        if beds >= 3:   scores["beds"] = 0
-        elif beds == 2: scores["beds"] = 1
-        elif beds == 1: scores["beds"] = 3
+        if beds >= 3:   scores["bedrooms"] = 0
+        elif beds == 2: scores["bedrooms"] = 1
+
+    # pre1940: 0=before 1940, 1=1940-1960, 2=after 1960
     if year:
-        if year < 1930:   scores["historic_age"] = 0
-        elif year >= 2016: scores["historic_age"] = 1
-        elif year < 1960: scores["historic_age"] = 2
-        else:             scores["historic_age"] = 3
+        if year < 1940:   scores["pre1940"] = 0
+        elif year < 1960: scores["pre1940"] = 1
+        else:             scores["pre1940"] = 2
 
     return scores
 

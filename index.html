@@ -236,12 +236,8 @@ async function serverSet(key,val){
     state[key]=val;
     clearTimeout(_saveTimer);
     _saveTimer=setTimeout(async()=>{
-      let token=_gistToken();
-      if(!token){
-        token=prompt('Paste your GitHub PAT (gist scope) to save settings — stored locally, never sent to server:');
-        if(token)localStorage.setItem('hev_gist_token',token.trim());
-        else return;
-      }
+      const token=_gistToken();
+      if(!token)return;
       try{
         await fetch('https://api.github.com/gists/'+GIST_ID,{
           method:'PATCH',
