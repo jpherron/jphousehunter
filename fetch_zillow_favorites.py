@@ -2,9 +2,14 @@
 """
 Zillow Favorites Importer
 Fetches your saved homes from Zillow using browser session cookies and
-merges them into data.json (or prints them with --dry-run).
+syncs them into the house evaluator app (Supabase) or data.json (GitHub).
 
 Usage:
+  # Sync to the app (Supabase) — recommended
+  python3 fetch_zillow_favorites.py --cookies "..." --sync-app
+  python3 fetch_zillow_favorites.py --cookies "..." --sync-app --dry-run
+
+  # Legacy: push to GitHub data.json
   python3 fetch_zillow_favorites.py --cookies "cookie_string_here"
   python3 fetch_zillow_favorites.py --cookies-file zillow_cookies.txt
   python3 fetch_zillow_favorites.py --cookies "..." --dry-run
@@ -400,6 +405,126 @@ def dedup_merge(new_listings: list[dict], existing: list[dict]) -> tuple[list[di
     return merged, added
 
 
+# ─── SUPABASE SYNC ───────────────────────────────────────────────────────────
+
+SB_URL = "https://ovymgkyzwtobkiphpoed.supabase.co"
+SB_KEY = "sb_publishable_6YYiqctG59yOTGETh262jQ_FsxtjfTi"
+SB_HEADERS = {
+    "Content-Type": "application/json",
+    "apikey": SB_KEY,
+    "Authorization": f"Bearer {SB_KEY}",
+    "Prefer": "resolution=merge-duplicates",
+}
+
+APP_CRITERIA = [
+    "t_stop","portsmouth","walkable","restaurants","nature",
+    "price","sqft","type","bedrooms","ensuite","ceiling",
+    "storage","workshop","fenced","move_in","ac",
+    "sys_roof","sys_elec","sys_plumb","sys_siding","sys_windows","sys_hvac",
+    "pre1940","hoa","arch","light",
+]
+SCALE5_CRITERIA = {"arch", "light"}
+
+
+def format_address_for_app(address: str) -> str:
+    """Convert 'Street, City, ST 00000' → 'Street, City ST' for the app's extractTown()."""
+    m = re.match(r'^(.+),\s*([^,]+),\s*(MA|RI|CT|NH)\s*\d{0,5}\s*$', address, re.IGNORECASE)
+    if m:
+        return f"{m.group(1).strip()}, {m.group(2).strip()} {m.group(3).upper()}"
+    return address
+
+
+def new_app_listing(name: str, url: str, status: str = "for_sale") -> dict:
+    scores = {c: (0 if c in SCALE5_CRITERIA else "unknown") for c in APP_CRITERIA}
+    notes = "Status: Pending" if status == "pending" else ""
+    return {"name": name, "url": url, "scores": scores, "notes": notes, "lat": None, "lng": None, "gut": None}
+
+
+def supabase_get(key: str) -> str | None:
+    try:
+        resp = requests.get(
+            f"{SB_URL}/rest/v1/hev_store?key=eq.{key}&select=value",
+            headers=SB_HEADERS, timeout=10,
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            if data:
+                return data[0]["value"]
+    except Exception as e:
+        print(f"  Supabase read error: {e}")
+    return None
+
+
+def supabase_set(key: str, value: str) -> bool:
+    try:
+        resp = requests.post(
+            f"{SB_URL}/rest/v1/hev_store",
+            headers=SB_HEADERS,
+            json={"key": key, "value": value, "updated_at": datetime.now(timezone.utc).isoformat()},
+            timeout=10,
+        )
+        return resp.status_code in (200, 201)
+    except Exception as e:
+        print(f"  Supabase write error: {e}")
+        return False
+
+
+def sync_to_app(new_listings: list[dict], dry_run: bool = False) -> None:
+    """Sync Zillow favorites into the Supabase-backed house evaluator app."""
+    print("\nReading current listings from Supabase...")
+    raw = supabase_get("hev_listings")
+    existing = []
+    if raw:
+        try:
+            existing = json.loads(raw)
+            print(f"  {len(existing)} existing listings")
+        except json.JSONDecodeError:
+            print("  Could not parse existing listings, starting fresh")
+
+    def norm(s: str) -> str:
+        return re.sub(r'\W+', ' ', s).lower().strip()
+
+    existing_by_name = {norm(l["name"]): l for l in existing}
+
+    merged = []
+    added = updated = 0
+
+    for l in new_listings:
+        app_name = format_address_for_app(l["address"])
+        key = norm(app_name)
+        if key in existing_by_name:
+            ex = existing_by_name[key]
+            # Preserve scores, gut, notes — just refresh URL and pending status
+            ex["url"] = l.get("url", ex.get("url", ""))
+            if l.get("status") == "pending" and "pending" not in (ex.get("notes") or "").lower():
+                ex["notes"] = ("Status: Pending\n" + ex.get("notes", "")).strip()
+            elif l.get("status") != "pending" and ex.get("notes", "").startswith("Status: Pending"):
+                ex["notes"] = ex["notes"].replace("Status: Pending", "").strip()
+            merged.append(ex)
+            updated += 1
+        else:
+            merged.append(new_app_listing(app_name, l.get("url", ""), l.get("status", "for_sale")))
+            added += 1
+
+    pending_count = sum(1 for l in new_listings if l.get("status") == "pending")
+    print(f"\nResult: {len(merged)} listings ({added} new, {updated} updated, {pending_count} pending)")
+    print("\nListings:")
+    for l in merged:
+        flag = " [PENDING]" if "Status: Pending" in (l.get("notes") or "") else ""
+        print(f"  {l['name']}{flag}")
+
+    if dry_run:
+        print("\n[dry-run] Not writing to Supabase.")
+        return
+
+    print("\nWriting to Supabase...")
+    ok = supabase_set("hev_listings", json.dumps(merged, ensure_ascii=False))
+    if ok:
+        print(f"  Done — {len(merged)} listings synced to app")
+    else:
+        print("  Write failed")
+
+
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 def _to_int(val) -> int | None:
@@ -423,8 +548,9 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--cookies", help="Raw cookie string from browser DevTools")
     group.add_argument("--cookies-file", help="Path to a file containing the cookie string")
-    parser.add_argument("--dry-run", action="store_true", help="Don't push to GitHub, just print results")
-    parser.add_argument("--replace", action="store_true", help="Replace all existing listings with only Zillow favorites")
+    parser.add_argument("--dry-run", action="store_true", help="Print results without writing anywhere")
+    parser.add_argument("--sync-app", action="store_true", help="Sync to the Supabase-backed app (recommended)")
+    parser.add_argument("--replace", action="store_true", help="(GitHub mode) Replace all listings with Zillow favorites")
     parser.add_argument("--debug", action="store_true", help="Verbose output")
     args = parser.parse_args()
 
@@ -434,10 +560,13 @@ def main():
     else:
         cookie_str = args.cookies
 
-    token = os.environ.get("GITHUB_TOKEN") if not args.dry_run else None
-    if not args.dry_run and not token:
-        print("Error: set GITHUB_TOKEN environment variable (or use --dry-run)")
-        sys.exit(1)
+    if not args.sync_app and not args.dry_run:
+        token = os.environ.get("GITHUB_TOKEN")
+        if not token:
+            print("Error: set GITHUB_TOKEN environment variable, use --sync-app, or use --dry-run")
+            sys.exit(1)
+    else:
+        token = None
 
     # Strategy 1: GraphQL
     print("Trying Zillow GraphQL API...")
@@ -478,11 +607,15 @@ def main():
     if pending:
         print(f"\n  {len(pending)} listing(s) flagged as pending/under contract")
 
+    if args.sync_app:
+        sync_to_app(new_listings, dry_run=args.dry_run)
+        return
+
     if args.dry_run:
         print("\n[dry-run] Not pushing to GitHub.")
         return
 
-    # Load current data
+    # Legacy: push to GitHub data.json
     print("\nLoading current data.json from GitHub...")
     current = get_current_data()
     existing = current.get("listings", [])
