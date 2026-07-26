@@ -275,27 +275,32 @@ async function withTimeout(promise, ms=5000){
 }
 
 async function loadAllState(){
+  // One Gist fetch, then extract all keys from it
+  let gist={};
   try{
-    const [wRaw,lRaw,ljRaw,lpRaw,lwRaw]=await withTimeout(Promise.all([
-      serverGet('hev_weights'),
-      serverGet('hev_listings'),
-      serverGet('hev_last_json'),
-      serverGet('hev_locprefs'),
-      serverGet('hev_locweight'),
-    ]));
-    if(wRaw){try{const p=JSON.parse(wRaw);Object.keys(p).forEach(k=>{if(k in weights)weights[k]=+p[k];});}catch(e){}}
-    if(lRaw){try{listings=JSON.parse(lRaw);}catch(e){}}
-    if(ljRaw){lastImportJson=ljRaw;}
-    if(lpRaw){try{locPrefs=JSON.parse(lpRaw);}catch(e){}}
-    if(lwRaw){locWeight=+lwRaw;}
+    gist=await withTimeout(_gistLoad(),5000);
   }catch(e){
-    console.warn('Server load failed, using localStorage:', e.message);
-    try{const s=localStorage.getItem('hev_weights');if(s){const p=JSON.parse(s);Object.keys(p).forEach(k=>{if(k in weights)weights[k]=+p[k];});}}catch(e){}
-    try{const s=localStorage.getItem('hev_listings');if(s)listings=JSON.parse(s);}catch(e){}
-    try{lastImportJson=localStorage.getItem('hev_last_json');}catch(e){}
-    try{const s=localStorage.getItem('hev_locprefs');if(s)locPrefs=JSON.parse(s);}catch(e){}
-    try{const s=localStorage.getItem('hev_locweight');if(s)locWeight=+s;}catch(e){}
+    console.warn('Gist load failed:', e.message);
   }
+
+  function g(key){
+    // Prefer Gist, fall back to localStorage
+    const v=gist[key];
+    if(v!==undefined&&v!==null)return v;
+    try{return localStorage.getItem(key);}catch(e){return null;}
+  }
+
+  const wRaw=g('hev_weights');
+  const lRaw=g('hev_listings');
+  const ljRaw=g('hev_last_json');
+  const lpRaw=g('hev_locprefs');
+  const lwRaw=g('hev_locweight');
+
+  if(wRaw){try{const p=JSON.parse(wRaw);Object.keys(p).forEach(k=>{if(k in weights)weights[k]=+p[k];});}catch(e){}}
+  if(lRaw){try{listings=JSON.parse(lRaw);}catch(e){}}
+  if(ljRaw){lastImportJson=ljRaw;}
+  if(lpRaw){try{locPrefs=JSON.parse(lpRaw);}catch(e){}}
+  if(lwRaw){locWeight=+lwRaw;}
 }
 
 function extractTown(name){
@@ -1262,7 +1267,8 @@ function goEdit(idx){
   showTab('listings');
   setTimeout(()=>{const el=document.getElementById('lc-'+idx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},100);
 }
-loadAllState().then(async()=>{
+(async()=>{
+  try{await loadAllState();}catch(e){console.warn('loadAllState error:',e);}
   if(!listings.length){
     try{
       const r=await fetch('https://raw.githubusercontent.com/jpherron/jphousehunter/main/data.json');
@@ -1270,13 +1276,13 @@ loadAllState().then(async()=>{
         const d=await r.json();
         listings=Array.isArray(d)?d:(d.listings||[]);
       }
-    }catch(e){}
+    }catch(e){console.warn('data.json fetch failed:',e);}
   }
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('app-root').style.display='';
   renderTabs();
   renderListings();
-});
+})();
 </script>
 </body>
 </html>
